@@ -1,0 +1,1912 @@
+
+    const PRICING = window.PFM_PRICING || {};
+    const RETAIL_PRICING = PRICING.retail || {};
+    const ROUTE_PACKAGES = PRICING.routePackages || {};
+    const SHOPPING_CENTRE_PRICING = PRICING.shoppingCentre || {};
+
+    const OPERATING_UNIT_MAP = { "Shops": 7, "Shopping Centres": 8, "Streets": 9 };
+    const CUSTOMER_TYPE_TO_OPERATING_UNIT = { "Retail Chain": "Shops", "Shopping Centre": "Shopping Centres" };
+    const SALESPERSON_MAP = {
+      "Christiaan van Rooijen": 231,
+      "Anna Reilander": 394,
+      "Arnoud Aschman": 343,
+      "Bart Schmitz": 9,
+      "David Sturdy": 4,
+      "Krystof Gogela": 387,
+      "Mark Gosnell": 335,
+      "Mark King": 263,
+      "Oliver Germer": 404,
+      "Phill Cox": 122,
+      "Prince Competence": 382,
+      "Raymond Sestig": 328,
+      "Samar Moussa": 399,
+      "Tim Drayton": 97
+    };
+    const ODOO_TEMPLATE_MAP = {
+      "Shops": { "Budget": "odoo_template_shops_budget", "Premium": "odoo_template_shops_premium" },
+      "Shopping Centres": { "Budget": "odoo_template_shopping_centres_budget", "Premium": "odoo_template_shopping_centres_premium" },
+      "Streets": { "Budget": "odoo_template_streets_budget", "Premium": "odoo_template_streets_premium" }
+    };
+    const OPPORTUNITY_MAP = { "Premium": 198, "Budget": 199 };
+
+    const state = {
+      step: 1,
+      lang: "EN",
+      customerType: "Retail Chain",
+      selectedGoals: ["baseline_missing", "visitors_not_buying"],
+      selectedPackage: "performance",
+      opportunityType: "Premium",
+      values: {
+        clientName: "Nelson Schoenen",
+        preparedBy: "Anna Reilander",
+        segment: "Footwear Retail",
+        locations: 50,
+        weeklyFootfall: 8400,
+        measurement: "Current traffic and sales data",
+        centreType: "Covered centre",
+        entrances: 4,
+        centreSurface: 35000,
+        storesPresent: 85,
+        conversionRate: 18,
+        avgTicket: 32,
+        grossMargin: 60,
+        footfallUplift: 0,
+        conversionUplift: 0,
+        atvUplift: 0,
+        realisationFactor: 25,
+        openDays: 6,
+        tcoYears: 3,
+        satShare: 18,
+        satBoost: 0,
+        entranceCapexStore: RETAIL_PRICING.entrancePerformance?.capexPerStore ?? 1500,
+        entranceMonthlyStore: RETAIL_PRICING.entrancePerformance?.monthlyPerStore ?? 21,
+        captureCapexStore: RETAIL_PRICING.captureRate?.capexPerStore ?? 500,
+        captureMonthlyStore: RETAIL_PRICING.captureRate?.monthlyPerStore ?? 10,
+        captureStores: RETAIL_PRICING.captureRate?.defaultScopeStores ?? 10,
+        instoreCapexPerSqm: RETAIL_PRICING.instoreJourney?.capexPerSqm ?? 35,
+        instoreMonthlySensor: RETAIL_PRICING.instoreJourney?.monthlyPerSensor ?? 125,
+        instoreStores: RETAIL_PRICING.instoreJourney?.defaultPilotStores ?? 1,
+        avgStoreSqm: RETAIL_PRICING.instoreJourney?.defaultAverageStoreSqm ?? 150,
+        instoreSqmCoveragePerSensor: RETAIL_PRICING.instoreJourney?.sqmCoveragePerSensor ?? 75
+      }
+    };
+
+
+
+    const REALISATION_MAP = {
+      "Conservative": 10,
+      "Cautious base": 15,
+      "Realistic base": 25,
+      "Strong adoption": 35,
+      "Best case": 50
+    };
+
+    const journey = [
+      { id: 1, icon: "🏁", label: "Context" },
+      { id: 2, icon: "🎯", label: "Performance leaks" },
+      { id: 3, icon: "💡", label: "Insight fit" },
+      { id: 4, icon: "€", label: "Impact model" },
+      { id: 5, icon: "🧭", label: "Route" },
+      { id: 6, icon: "✓", label: "Summary" }
+    ];
+
+    const centreTypeOptions = {
+      EN: ["Covered centre", "Open-air centre", "Partly covered centre"],
+      DE: ["Überdachtes Center", "Offenes Center", "Teilweise überdachtes Center"],
+      NL: ["Overdekt centrum", "Open centrum", "Deels overdekt centrum"],
+      FR: ["Centre couvert", "Centre ouvert", "Centre partiellement couvert"],
+      ES: ["Centro cubierto", "Centro abierto", "Centro parcialmente cubierto"]
+    };
+
+    const retailGoals = {
+      baseline_missing: {
+        icon: "🧱",
+        title: "We do not have a trusted performance baseline",
+        pain: "We know sales or transactions, but we do not know how many people actually entered, which makes store performance hard to judge.",
+        outcome: "Create a reliable baseline for footfall, conversion and store potential across every location.",
+        insightFit: "Trusted Footfall & Conversion Baseline",
+        proof: "Seen in Wibra, PassaSports, Telenet and smaller retailers: existing counters are minimal, old, lazy or missing, while transaction data alone cannot explain opportunity.",
+        hiddenKpis: ["footfall", "count_in", "count_out", "transactions", "conversion_rate", "data_quality", "sensor_uptime"],
+        hiddenSubscriptions: ["sub_footfall_core", "sub_sensor_monitoring", "sub_data_quality", "sub_sales_conversion"],
+        questions: ["Do you know how many visitors you need to create today’s sales?", "Is the data trusted enough to compare stores?", "Can store teams see the same truth as head office?"]
+      },
+      visitors_not_buying: {
+        icon: "📈",
+        title: "We have visitors, but not enough buyers",
+        pain: "Traffic is visible, but the moment, store or reason for conversion leakage is still unclear.",
+        outcome: "Identify which stores, days and hours have enough visitors but miss sales potential.",
+        insightFit: "Conversion Leak Intelligence",
+        proof: "Recurring pattern in sales calls: retailers want to connect footfall with transactions, conversion, ATV and sales per visitor instead of only counting people.",
+        hiddenKpis: ["footfall", "transactions", "conversion_rate", "sales_per_visitor", "atv", "conversion_by_hour"],
+        hiddenSubscriptions: ["sub_footfall_core", "sub_sales_conversion", "sub_performance_dashboard", "sub_hourly_conversion"],
+        questions: ["Which stores have good traffic but weak sales?", "When does conversion drop?", "Can teams see what to improve next week?"]
+      },
+      street_vs_store: {
+        icon: "🎯",
+        title: "We do not know if the problem is the street or the store",
+        pain: "When visits drop, teams debate whether the street is quieter or the store has lost attraction power.",
+        outcome: "Separate external traffic decline from storefront attraction and calculate capture rate by day, week and campaign.",
+        insightFit: "Capture Rate & Street Potential Intelligence",
+        proof: "Mr Marvis, Essentials and LAGAAM all raised the need to compare passers-by with store visitors to understand attraction, window impact and real location potential.",
+        hiddenKpis: ["passerby_traffic", "capture_rate", "footfall", "weather_context", "campaign_uplift", "street_trend"],
+        hiddenSubscriptions: ["sub_passerby_measurement", "sub_capture_rate", "sub_external_context", "sub_marketing_insights"],
+        questions: ["Are fewer people entering because the street is quieter?", "Is the window or facade pulling enough people in?", "Can marketing prove it increased store visits?"]
+      },
+      groups_distort_conversion: {
+        icon: "👨‍👩‍👧",
+        title: "Families and groups make conversion look worse than it is",
+        pain: "A store can look underperforming when many visitors come in as families, friends or groups where only one person is likely to buy.",
+        outcome: "Add buying-unit context so conversion discussions become fairer and more useful for store teams.",
+        insightFit: "Buying Unit Conversion Context",
+        proof: "This came up strongly in conversations around weekend traffic, families, tourists, school groups and group entry patterns.",
+        hiddenKpis: ["individual_footfall", "buying_units", "group_size", "group_count", "adult_child_split", "family_share", "conversion_rate", "conversion_per_buying_unit"],
+        hiddenSubscriptions: ["sub_buying_units", "sub_group_counting", "sub_adult_child", "sub_demographic_context", "sub_sales_conversion"],
+        questions: ["Do weekend numbers punish stores with family traffic?", "Are you measuring people or real buying opportunities?", "Can store managers explain conversion with context?"]
+      },
+      visitor_profile_unknown: {
+        icon: "🧬",
+        title: "We do not know who is entering our stores",
+        pain: "Footfall shows how many people enter, but not whether the visitor mix is changing by gender, adults, children, families, groups or later age categories.",
+        outcome: "Activate visitor profile datasets so teams can understand who visits, when the mix changes and which stores attract the right audience.",
+        insightFit: "Visitor Profile & Demographic Intelligence",
+        proof: "Retail conversations increasingly move beyond count-in/count-out: customers ask for gender, kids versus adults, family/group context and later age categories to understand real buying potential and audience fit.",
+        hiddenKpis: ["gender_split", "adult_child_split", "age_category_future", "group_count", "family_share", "visitor_profile_by_store", "visitor_profile_by_period"],
+        hiddenSubscriptions: ["sub_demographics_gender", "sub_adult_child", "sub_age_future", "sub_group_counting", "sub_visitor_profile_dashboard"],
+        questions: ["Do you know if the right audience is entering?", "Does the visitor mix differ by store, day or campaign?", "Are families and groups changing the real buying opportunity?"]
+      },
+      stores_hard_to_compare: {
+        icon: "⚖️",
+        title: "Stores are compared unfairly",
+        pain: "City stores, destination stores, retail parks, tourist locations and flagships are often compared as if they operate under the same conditions.",
+        outcome: "Create fair peer groups and reveal real underperformance, hidden potential and benchmark gaps.",
+        insightFit: "Portfolio Benchmark Intelligence",
+        proof: "Rituals and Mr Marvis both show the need to compare stores by type, context, traffic profile and location potential instead of raw totals alone.",
+        hiddenKpis: ["store_type", "sqm", "footfall", "conversion_rate", "sales_per_visitor", "benchmark_index", "peer_group"],
+        hiddenSubscriptions: ["sub_portfolio_dashboard", "sub_benchmarking", "sub_store_type_analysis", "sub_region_dashboard"],
+        questions: ["Do you compare stores by type, size and context?", "Which locations deserve attention first?", "Can regional managers explain performance differences?"]
+      },
+      staffing_feels_reactive: {
+        icon: "👥",
+        title: "Staff planning and service moments are based too much on feeling",
+        pain: "Busy moments are obvious afterwards, but service capacity should be planned before the commercial opportunity is missed.",
+        outcome: "Match staffing, service focus and store routines to real visitor demand, peaks, dead hours and conversion gaps.",
+        insightFit: "Store Operations & Service Intelligence",
+        proof: "Multiple conversations link footfall to staffing, service levels, missed opportunity hours and whether employees have enough time to convert visitors.",
+        hiddenKpis: ["hourly_footfall", "peak_hours", "dead_hours", "conversion_by_hour", "staff_interaction", "service_wait_time"],
+        hiddenSubscriptions: ["sub_operations_insights", "sub_weekly_reporting", "sub_dead_hour_analysis", "sub_service_interaction"],
+        questions: ["Which hours are busy but commercially weak?", "Are schedules based on real demand?", "Where can service levels improve without guessing?"]
+      },
+      entrance_bounce: {
+        icon: "🚪",
+        title: "People step in, hesitate and leave again",
+        pain: "Some visitors cross the threshold, browse the entrance area, see friction such as stairs or layout, and leave before they become a real sales opportunity.",
+        outcome: "Measure entrance engagement and bounce so teams know whether the first metres of the store create or lose potential.",
+        insightFit: "Entrance Engagement & Bounce Intelligence",
+        proof: "Essentials showed a very concrete leak: people enter, pause near the entrance, see the stairs or first display, and walk out again.",
+        hiddenKpis: ["entrance_detection", "entry_bounce", "threshold_to_store_ratio", "front_zone_dwell", "first_zone_conversion"],
+        hiddenSubscriptions: ["sub_entrance_engagement", "sub_zone_analytics", "sub_store_layout_insights"],
+        questions: ["Do people actually enter the store or only the doorway?", "Where should the visitor become a counted opportunity?", "Does the first zone help or block conversion?"]
+      },
+      instore_unknown: {
+        icon: "🧭",
+        title: "We do not know what happens after people enter",
+        pain: "The store may be busy, but teams cannot see where people go, what they skip, where they dwell or which category loses attention.",
+        outcome: "Use zone, journey, heatmap and dwell insights to improve layout, category exposure and flagship learnings.",
+        insightFit: "In-store Journey & Category Intelligence",
+        proof: "George / D'HYÈRES wanted to compare gold versus silver sections; PassaSports asked about heatmapping and assortment; Telenet and Dreamland explored in-store analytics as a next stage.",
+        hiddenKpis: ["zone_traffic", "dwell_time", "heatmap", "product_category_exposure", "route_flow", "interaction_time"],
+        hiddenSubscriptions: ["sub_zone_analytics", "sub_journey_tracking", "sub_heatmap", "sub_category_performance"],
+        questions: ["Which areas attract traffic but do not convert?", "Does layout or product category explain performance?", "Which flagship learnings should shape future stores?"]
+      },
+      expansion_gut_feel: {
+        icon: "📍",
+        title: "Expansion decisions still rely too much on gut feel",
+        pain: "Retail teams often choose cities or streets because they feel right, without knowing if the audience, traffic and location potential match the brand.",
+        outcome: "Support expansion, relocation and lease discussions with location potential, catchment and street-performance context.",
+        insightFit: "Location Potential & Expansion Intelligence",
+        proof: "Mr Marvis described expansion decisions using some data but also gut feeling and brand fit; the conversation moved directly to using data for future store decisions.",
+        hiddenKpis: ["location_potential", "catchment_profile", "brand_affinity", "street_traffic", "capture_rate", "rent_vs_potential"],
+        hiddenSubscriptions: ["sub_location_strategy", "sub_external_context", "sub_catchment_analysis", "sub_passerby_measurement"],
+        questions: ["Is this street right for your customer profile?", "Do you know expected traffic before signing?", "Should you open, optimise or move?"]
+      },
+      data_not_activated: {
+        icon: "🏆",
+        title: "The data exists, but teams do not act on it enough",
+        pain: "Dashboards alone do not change behaviour. Store and regional teams need simple action triggers, rhythm and motivation.",
+        outcome: "Turn performance data into weekly action, store leagues, management focus and measurable improvement.",
+        insightFit: "Retail Activation & Action Layer",
+        proof: "Rituals discussed gamification, leagues and weekly sharing to increase engagement; Dreamland explicitly searched for a knowledge partner that helps them understand what to do with the data.",
+        hiddenKpis: ["weekly_action_points", "store_ranking", "conversion_delta", "league_score", "opportunity_score", "priority_driver"],
+        hiddenSubscriptions: ["sub_ai_recommendations", "sub_weekly_action_layer", "sub_gamification", "sub_customer_success"],
+        questions: ["Do store teams know what to do next week?", "Can regional managers prioritise action?", "How do you keep performance improvement top of mind?"]
+      }
+    };
+
+
+    const shoppingGoals = {
+      centre_baseline: {
+        icon: "🏛️",
+        cluster: "Centre baseline",
+        title: "We cannot prove how the centre is performing over time",
+        pain: "The centre feels busy or quiet, but owners, tenants and investors need objective proof of traffic trends, peaks and benchmark context.",
+        outcome: "Create a trusted centre baseline for visits, entrance contribution, peak moments and comparable performance over time.",
+        insightFit: "Centre Performance Baseline",
+        proof: "Seen in shopping centre conversations: owners need clear monthly/yearly traffic proof for tenants, investors, municipalities and internal stakeholders.",
+        hiddenKpis: ["centre_footfall", "entrance_traffic", "centre_traffic_index", "peak_day", "peak_hour", "benchmark_index", "year_on_year_growth", "month_on_month_growth", "weather_context", "event_context"],
+        hiddenSubscriptions: ["mod_entrance_counting", "mod_centre_dashboard", "mod_benchmark_reporting", "mod_data_validation_service"],
+        questions: ["Can you prove whether the centre is growing or declining?", "Can you benchmark against similar centres?", "Do tenants trust the numbers?"],
+        modules: ["Entrance Counting", "Centre Dashboard", "Benchmark Reporting"]
+      },
+      entrance_value: {
+        icon: "🚪",
+        cluster: "Centre baseline",
+        title: "We do not know which entrances actually drive value",
+        pain: "Total centre traffic is useful, but it does not explain which entrances, access points or floors are becoming stronger or weaker.",
+        outcome: "Reveal the contribution, trend and anomalies of every entrance or access point.",
+        insightFit: "Entrance Performance Intelligence",
+        proof: "Shopping centre setups often require all public access routes to be sealed: main entrances, parking entrances, upper/lower levels and anchor entrances.",
+        hiddenKpis: ["entrance_count", "entrance_share", "entrance_trend", "in_out_balance", "access_point_index", "entrance_anomaly"],
+        hiddenSubscriptions: ["mod_3d_entrance_sensors", "mod_entrance_dashboard", "mod_data_quality_monitoring"],
+        questions: ["Which entrance contributes most to centre visits?", "Did roadworks, parking or tenant changes shift traffic?", "Which access point underperforms?"],
+        modules: ["3D Entrance Sensors", "Entrance Performance Dashboard"]
+      },
+      zone_flow: {
+        icon: "🧭",
+        cluster: "Flow & engagement",
+        title: "Visitors enter the centre, but we do not know where they go",
+        pain: "Entrance counts show how many people arrive, but not whether visitors reach floors, corridors, toilets, F&B zones, anchors or weaker areas.",
+        outcome: "Understand zone traffic, corridor flows, floor distribution and facility usage across the centre.",
+        insightFit: "Zone Flow Intelligence",
+        proof: "Centre managers increasingly ask for zone, passage and floor data to explain why certain areas or upper levels attract less traffic.",
+        hiddenKpis: ["zone_traffic", "floor_traffic", "corridor_flow", "facility_usage", "toilet_zone_traffic", "anchor_zone_traffic", "zone_share", "zone_conversion_proxy"],
+        hiddenSubscriptions: ["mod_zone_counting", "mod_floor_flow_dashboard", "mod_facility_flow_analytics"],
+        questions: ["Do visitors reach every floor?", "Which corridors are underused?", "Do facilities and anchors pull traffic?"],
+        modules: ["Zone Counting", "Floor Flow Dashboard", "Facility Analytics"]
+      },
+      tenant_capture: {
+        icon: "🛍️",
+        cluster: "Tenant & leasing value",
+        title: "We cannot prove tenant value or tenant capture",
+        pain: "Centre traffic is visible, but it is unclear which tenants capture mall traffic and which units underperform despite strong flow.",
+        outcome: "Show tenant visits, tenant capture, traffic in front of stores and category performance.",
+        insightFit: "Tenant Capture Intelligence",
+        proof: "For outlet and shopping centre portfolios, tenant capture ratio, gross/net capture and retailer-level performance are key leasing and asset management metrics.",
+        hiddenKpis: ["tenant_traffic", "tenant_capture_rate", "gross_capture_rate", "net_capture_rate", "traffic_in_front_of_store", "tenant_visit_share", "category_capture", "top_tenant_performers", "bottom_tenant_performers"],
+        hiddenSubscriptions: ["mod_tenant_counting", "mod_mall_to_tenant_capture", "mod_tenant_dashboard", "mod_category_benchmarking"],
+        questions: ["Which tenants turn mall traffic into store visits?", "Where is traffic strong but tenant capture weak?", "Can leasing prove unit value?"],
+        modules: ["Tenant Counting", "Capture Analytics", "Category Benchmarking"]
+      },
+      leasing_evidence: {
+        icon: "📍",
+        cluster: "Tenant & leasing value",
+        title: "Leasing conversations are still based too much on opinion",
+        pain: "When a unit is vacant or rent is challenged, leasing needs evidence about flow, unit position, brand fit and catchment potential.",
+        outcome: "Create leasing evidence with unit heatmaps, flow scores, brand affinity and tenant-mix opportunities.",
+        insightFit: "Leasing Evidence & Unit Value Intelligence",
+        proof: "Retail park and centre owners want to show potential tenants why a specific unit, zone or boulevard position is attractive.",
+        hiddenKpis: ["unit_flow_score", "zone_heatmap", "tenant_mix_gap", "brand_affinity", "leasing_potential", "category_gap", "unit_visibility_score"],
+        hiddenSubscriptions: ["mod_smart_data", "mod_brand_affinity", "mod_leasing_battlecard", "mod_unit_heatmap_layer"],
+        questions: ["Can we prove this unit has strong traffic?", "Which tenant category is missing?", "Which brands fit this catchment?"],
+        modules: ["Smart Data", "Brand Affinity", "Leasing Battlecard"]
+      },
+      catchment_geo: {
+        icon: "🗺️",
+        cluster: "Catchment & marketing",
+        title: "We do not know where visitors come from or how our catchment is changing",
+        pain: "The centre needs better insight into visitor origin, postcode areas, competitor overlap, visit frequency and household profiles.",
+        outcome: "Map catchment, visitor origin, cross-visitation and geo-marketing battlegrounds using geo-app data.",
+        insightFit: "Catchment & Geo App Intelligence",
+        proof: "Geo-app data can enrich sensor counts with catchment, postcode, competitor and visitor-profile insights; it is a data service, not extra counting hardware.",
+        hiddenKpis: ["catchment_area", "visitor_origin", "postcode_penetration", "city_origin", "visit_frequency", "cross_visitation", "competitor_overlap", "household_profile", "income_profile", "geo_marketing_area"],
+        hiddenSubscriptions: ["mod_geo_app_data", "mod_catchment_dashboard", "mod_competitor_battlecard", "mod_geo_marketing_insights"],
+        questions: ["Where do visitors come from?", "Which competitors share our audience?", "Where should marketing focus?"],
+        modules: ["Geo App Data", "Catchment Dashboard", "Competitor Battlecard"]
+      },
+      brand_affinity: {
+        icon: "🏷️",
+        cluster: "Tenant & leasing value",
+        title: "We do not know which brands our visitors already love",
+        pain: "Tenant mix decisions are harder when you cannot see which brands your visitors visit elsewhere or which categories are missing.",
+        outcome: "Use brand affinity, category gaps and competitor pull to create a data-backed leasing target list.",
+        insightFit: "Brand Affinity & Tenant Mix Intelligence",
+        proof: "Brand affinity can help identify brands or categories that your catchment already visits elsewhere but that are missing in your asset.",
+        hiddenKpis: ["brand_affinity", "brand_penetration", "missing_brand_opportunity", "category_affinity", "tenant_mix_score", "competitor_brand_pull", "leasing_target_score"],
+        hiddenSubscriptions: ["mod_brand_affinity_data", "mod_tenant_mix_analysis", "mod_leasing_intelligence", "mod_smart_data_dashboard"],
+        questions: ["Which brands have high affinity in our catchment?", "Which categories are missing?", "Can we support tenant acquisition with data?"],
+        modules: ["Brand Affinity Data", "Tenant Mix Analysis", "Leasing Intelligence"]
+      },
+      parking_mobility: {
+        icon: "🚗",
+        cluster: "Parking & mobility",
+        title: "We cannot explain parking pressure and mobility patterns",
+        pain: "Parking feels busy, but teams cannot prove occupancy, dwell time, peak pressure or unused capacity.",
+        outcome: "Measure car counts, vehicle dwell time, parking occupancy and mobility patterns across access points.",
+        insightFit: "Parking & Mobility Intelligence",
+        proof: "For retail parks and centres with parking access, ANPR and car counting can reveal visits, dwell time, occupancy and space utilisation.",
+        hiddenKpis: ["car_count_in", "car_count_out", "parking_occupancy", "vehicle_dwell_time", "parking_peak_pressure", "parking_capacity_utilisation", "parking_space_potential", "mobility_index"],
+        hiddenSubscriptions: ["mod_anpr_counting", "mod_car_park_dashboard", "mod_vehicle_dwell", "mod_mobility_layer"],
+        questions: ["When is parking actually full?", "How long do cars stay?", "Is there unused capacity for EV, kiosks or other uses?"],
+        modules: ["ANPR Counting", "Parking Occupancy", "Vehicle Dwell"]
+      },
+      anpr_origin: {
+        icon: "🌍",
+        cluster: "Parking & mobility",
+        title: "We do not know enough about international visitors and car origin",
+        pain: "Cross-border assets need to understand where cars come from and how visitor origin changes by period or campaign.",
+        outcome: "Show vehicle country/region origin, international share and dwell time by visitor group where legally available.",
+        insightFit: "ANPR Origin Intelligence",
+        proof: "ANPR origin analytics is relevant for centres and retail parks with visitors from multiple countries or regions.",
+        hiddenKpis: ["vehicle_origin_country", "vehicle_origin_region", "international_share", "vehicle_dwell_time", "cross_border_visitation", "car_origin_mix"],
+        hiddenSubscriptions: ["mod_anpr_origin", "mod_vehicle_dwell_dashboard", "mod_cross_border_reporting"],
+        questions: ["What share of cars comes from other countries?", "Which regions matter most?", "Does international traffic change over time?"],
+        modules: ["ANPR Origin Analytics", "Cross-border Reporting"]
+      },
+      dwell_cross_shopping: {
+        icon: "🔁",
+        cluster: "Flow & engagement",
+        title: "We cannot measure dwell time and cross-shopping properly",
+        pain: "The centre needs to understand whether visitors stay longer, visit multiple tenants, pass through or return later.",
+        outcome: "Estimate dwell time, shops per visit, cross-shopping and visit frequency using the right mix of sensors, smart data and feasibility review.",
+        insightFit: "Dwell Time & Cross-Shopping Intelligence",
+        proof: "Re-ID and cross-shopping can be valuable, but should be positioned as advanced and subject to feasibility, privacy and DPIA review.",
+        hiddenKpis: ["dwell_time", "shops_per_visit", "cross_shopping_index", "repeat_visit_frequency", "visitor_engagement", "re_id_feasibility", "journey_depth"],
+        hiddenSubscriptions: ["mod_reid_feasibility", "mod_dwell_time", "mod_cross_shopping", "mod_smart_data_frequency"],
+        questions: ["Do visitors stay long enough?", "Do they visit multiple tenants?", "Is Re-ID feasible and privacy-safe for this asset?"],
+        modules: ["Re-ID Feasibility", "Dwell Analytics", "Cross-Shopping Analysis"]
+      },
+      visitor_profile: {
+        icon: "👨‍👩‍👧",
+        cluster: "Flow & engagement",
+        title: "We do not understand visitor demographics well enough",
+        pain: "Visitor numbers are visible, but the mix of adults, children, families and gender patterns is not yet part of the asset story.",
+        outcome: "Activate visitor profile datasets on suitable 3D sensors to understand adult/child split, gender and later age categories.",
+        insightFit: "Visitor Profile Intelligence",
+        proof: "3D sensor datasets can add gender and adult/child indicators at entrances; age can be considered later when reliable and appropriate.",
+        hiddenKpis: ["gender_split", "adult_child_split", "family_share", "group_count", "visitor_profile_by_entrance", "demographic_trend", "age_category_future"],
+        hiddenSubscriptions: ["mod_3d_sensor_demographics", "mod_visitor_profile_dashboard", "mod_family_group_analytics"],
+        questions: ["Is the centre attracting families?", "Does visitor profile differ by entrance or event?", "Which demographics respond to campaigns?"],
+        modules: ["3D Demographics Add-on", "Visitor Profile Dashboard"]
+      },
+      event_marketing: {
+        icon: "📣",
+        cluster: "Catchment & marketing",
+        title: "We cannot connect events, marketing and offline visits",
+        pain: "Events and campaigns cost money, but offline impact is often hard to prove in visitor traffic and catchment response.",
+        outcome: "Measure event uplift, campaign response, social/online signals and offline visits in one view.",
+        insightFit: "Event & Marketing Impact Intelligence",
+        proof: "Centre teams need evidence that events, roadworks, campaigns or seasonal activations changed visits, not just impressions.",
+        hiddenKpis: ["event_uplift", "campaign_traffic_uplift", "social_engagement", "offline_visit_response", "event_roi", "marketing_effect_index", "weather_adjusted_traffic"],
+        hiddenSubscriptions: ["mod_event_monitor", "mod_marketing_impact", "mod_geo_campaign_analysis", "mod_weather_event_context"],
+        questions: ["Did the event increase visits?", "Which areas responded to marketing?", "Can we prove offline impact?"],
+        modules: ["Event Monitor", "Marketing Impact", "Geo Campaign Analysis"]
+      },
+      asset_health: {
+        icon: "📊",
+        cluster: "Portfolio control",
+        title: "Portfolio and asset teams cannot compare centres fairly",
+        pain: "Multiple centres and retail parks need one comparable view of asset health, trend, forecast and performance drivers.",
+        outcome: "Create an asset health score or Location Vitality Index to compare centres over time and identify what drives performance.",
+        insightFit: "Location Vitality Index / Asset Health Intelligence",
+        proof: "For portfolios, an all-in-one index can combine footfall, dwell time, car park occupancy, catchment and other factors into one comparable asset score.",
+        hiddenKpis: ["location_vitality_index", "asset_health_score", "portfolio_rank", "benchmark_score", "forecast_trend", "driver_breakdown", "footfall_benchmark", "dwell_time_score", "mobility_score", "catchment_score"],
+        hiddenSubscriptions: ["mod_lvi_asset_health", "mod_portfolio_dashboard", "mod_forecasting", "mod_executive_reporting"],
+        questions: ["Which centres are improving or declining?", "Which driver explains the score?", "Can asset teams compare apples-to-apples?"],
+        modules: ["LVI / Asset Health Index", "Portfolio Dashboard", "Forecasting"]
+      }
+    };
+
+    const packages = {
+      starter: {
+        name: "Essential",
+        headline: "Measure the basics reliably",
+        promise: "For retailers that first need a trusted baseline for store traffic and conversion potential.",
+        contains: ["Advantage Portal", "Data management", "Footfall", "Portfolio-wide report", "Sensor management", "Remote support", "Conversion rate"],
+        odooKey: "essential"
+      },
+      performance: {
+        name: "Professional",
+        headline: "Understand who visits and what attracts them",
+        promise: "For retailers that want visitor profile insights, capture-rate context and richer performance explanation.",
+        contains: ["Essential included", "Age / gender / group options", "Occupancy", "Capture rate"],
+        odooKey: "professional"
+      },
+      intelligence: {
+        name: "Enterprise",
+        headline: "Analyse journeys, zones and in-store behaviour",
+        promise: "For retailers that want in-store analytics, zoning, dwell, Re-ID feasibility or advanced reporting.",
+        contains: ["Professional included", "Re-ID / dwell", "Heat mapping", "Sales-data conversion report"],
+        odooKey: "enterprise"
+      }
+    };
+
+    const labels = {
+      EN: {
+        next: "Next", back: "Back", startScan: "Start scan", comingSoon: "Shopping Centre flow comes next",
+        company: "Company", preparedBy: "Prepared by", segment: "Segment", locations: "Locations", weeklyFootfall: "Footfall / week", measurement: "Current measurement",
+        centreType: "Centre type", entrances: "Number of entrances", centreSurface: "Centre surface", storesPresent: "Number of stores"
+      },
+      NL: {
+        next: "Verder", back: "Terug", startScan: "Start scan", comingSoon: "Shopping Centre flow komt hierna",
+        company: "Bedrijf", preparedBy: "Voorbereid door", segment: "Segment", locations: "Aantal locaties", weeklyFootfall: "Footfall per week", measurement: "Huidige meting",
+        centreType: "Type centrum", entrances: "Aantal entrees", centreSurface: "Oppervlakte centrum", storesPresent: "Aantal winkels"
+      },
+      DE: {
+        next: "Weiter", back: "Zurück", startScan: "Scan starten", comingSoon: "Shopping-Center-Flow folgt danach",
+        company: "Unternehmen", preparedBy: "Vorbereitet von", segment: "Segment", locations: "Standorte", weeklyFootfall: "Besucherfrequenz / Woche", measurement: "Aktuelle Messung",
+        centreType: "Center-Typ", entrances: "Anzahl Eingänge", centreSurface: "Center-Fläche", storesPresent: "Anzahl Stores"
+      },
+      FR: {
+        next: "Suivant", back: "Retour", startScan: "Démarrer", comingSoon: "Le flow Shopping Centre vient ensuite",
+        company: "Entreprise", preparedBy: "Préparé par", segment: "Segment", locations: "Nombre de sites", weeklyFootfall: "Fréquentation / semaine", measurement: "Mesure actuelle",
+        centreType: "Type de centre", entrances: "Nombre d'entrées", centreSurface: "Surface du centre", storesPresent: "Nombre de magasins"
+      },
+      ES: {
+        next: "Siguiente", back: "Atrás", startScan: "Iniciar scan", comingSoon: "El flujo Shopping Centre viene después",
+        company: "Empresa", preparedBy: "Preparado por", segment: "Segmento", locations: "Ubicaciones", weeklyFootfall: "Afluencia / semana", measurement: "Medición actual",
+        centreType: "Tipo de centro", entrances: "Número de entradas", centreSurface: "Superficie del centro", storesPresent: "Número de tiendas"
+      }
+    };
+
+    function L(key) { return (labels[state.lang] || labels.EN)[key] || key; }
+    function euro(n) { return "€" + Math.round(n).toLocaleString("de-DE"); }
+    function euroCompact(n) {
+      const value = Number(n || 0);
+      const abs = Math.abs(value);
+      if (abs >= 1000000) {
+        const v = value / 1000000;
+        const formatted = (Math.abs(v) >= 10 ? v.toFixed(1) : v.toFixed(1)).replace(/\.0$/, "");
+        return "€" + formatted + "M";
+      }
+      if (abs >= 100000) {
+        const v = value / 1000;
+        const formatted = v.toFixed(0);
+        return "€" + formatted + "K";
+      }
+      return euro(value);
+    }
+    function pct(n, digits = 1) { return Number(n).toFixed(digits).replace(".", ",") + "%"; }
+
+
+    const UI_TRANSLATIONS = {
+      NL: {
+        "today?":"", "Context":"Context", "Performance leaks":"Performance leaks", "Insight fit":"Insight fit", "Impact model":"Impact model", "Route":"Route", "Summary":"Samenvatting",
+        "PFM Retail Performance Scan":"PFM Retail Performance Scan", "Find the hidden potential in":"Vind het verborgen potentieel in", "Company":"Bedrijf",
+        "A guided performance conversation that turns store context, customer behaviour and business challenges into clear retail opportunities.":"Een begeleid performancegesprek dat winkelcontext, klantgedrag en zakelijke uitdagingen vertaalt naar duidelijke retailkansen.",
+        "Start with context":"Start met context", "Retail Chain":"Retailketen", "Shopping Centre":"Winkelcentrum",
+        "Stores, conversion, staffing and portfolio potential.":"Winkels, conversie, personeelsinzet en portfoliopotentieel.",
+        "Entrances, tenant value, zones and asset performance.":"Entrees, huurderswaarde, zones en asset performance.",
+        "PFM consultant":"PFM consultant", "Use this scan together with PFM to identify the most relevant performance opportunities.":"Gebruik deze scan samen met PFM om de meest relevante performancekansen te bepalen.",
+        "Retail diagnosis":"Retaildiagnose", "Shopping centre diagnosis":"Winkelcentrumdiagnose",
+        "Where does performance":"Waar lekt performance", "Where does asset value":"Waar lekt assetwaarde", "leak":"vandaag?",
+        "Select the situations that are most recognisable for your stores. PFM will translate them into relevant performance insights and next steps.":"Selecteer de situaties die het meest herkenbaar zijn voor je winkels. PFM vertaalt ze naar relevante performance-inzichten en vervolgstappen.",
+        "Choose the asset, leasing, flow, parking, catchment and portfolio challenges that are most relevant for your organisation.":"Kies de asset-, leasing-, flow-, parking-, catchment- en portfolio-uitdagingen die het meest relevant zijn.",
+        "Selected":"Geselecteerd", "Select":"Selecteer", "Show insight fit":"Toon insight fit",
+        "PFM fit":"PFM fit", "Translate pains into":"Vertaal pains naar", "actionable insights":"bruikbare inzichten",
+        "This is the practical insight layer: what PFM helps you see, explain and improve across stores.":"Dit is de praktische insight-laag: wat PFM helpt zien, verklaren en verbeteren over winkels heen.",
+        "This is how PFM translates the selected challenges into an asset intelligence approach: from visitor flow and catchment to tenant, parking and portfolio insight.":"Zo vertaalt PFM de gekozen uitdagingen naar asset intelligence: van bezoekersflow en catchment tot huurders-, parking- en portfolio-inzicht.",
+        "Suggested sales story":"Voorgesteld salesverhaal", "Build impact model":"Bouw impactmodel", "Build value model":"Bouw waardemodel",
+        "Impact model":"Impactmodel", "Compact outside,":"Compact aan de buitenkant,", "official ROI logic inside":"officiële ROI-logica aan de binnenkant",
+        "The buying journey stays simple. Under the hood this follows the trusted ROI calculator logic and only extends TCO with active PFM fit modules.":"De koopreis blijft simpel. Onderliggend volgt dit de vertrouwde ROI-calculator en wordt TCO alleen uitgebreid met actieve PFM fit-modules.",
+        "Business assumptions":"Business assumptions", "Editable in this step for scenario testing.":"Aanpasbaar in deze stap voor scenariotesten.",
+        "Footfall / week per store":"Footfall / week per winkel", "Current conversion rate":"Huidige conversieratio", "Average ticket value":"Gemiddelde bonwaarde", "Gross margin":"Brutomarge", "Conversion uplift through PFM":"Conversie-uplift via PFM", "ATV uplift":"ATV-uplift", "Realisation scenario":"Realisatiescenario",
+        "Advanced scope & pricing assumptions":"Geavanceerde scope- en prijsassumpties", "Open days / week":"Open dagen / week", "Contract term / years":"Contractduur / jaren",
+        "ROI output":"ROI-output", "Same logic as the official calculator.":"Dezelfde logica als de officiële calculator.",
+        "Payback time":"Terugverdientijd", "Based on realistic profit after monthly service.":"Gebaseerd op realistische winst na maandelijkse service.",
+        "Revenue baseline / year":"Omzetbaseline / jaar", "Total CAPEX":"Totale CAPEX", "Monthly service":"Maandelijkse service", "TCO over":"TCO over", "years":"jaar", "Realistic extra profit / year":"Realistische extra winst / jaar", "ROI over horizon":"ROI over looptijd",
+        "Choose route":"Kies route", "Recommended route":"Aanbevolen route", "Your suggested":"Jouw voorgestelde", "PFM Intelligence route":"PFM Intelligence-route",
+        "The route is selected automatically from the needs you chose. The monthly service shown below comes from the current Impact Model scope, not from a fixed package price.":"De route wordt automatisch gekozen op basis van de gekozen behoeften. De maandelijkse service hieronder komt uit de huidige Impact Model-scope, niet uit een vaste pakketprijs.",
+        "Monthly service from current scope":"Maandelijkse service uit huidige scope", "Measure the basics reliably":"Meet de basis betrouwbaar", "Understand who visits and what attracts them":"Begrijp wie bezoekt en wat hen aantrekt", "Analyse journeys, zones and in-store behaviour":"Analyseer journeys, zones en winkelgedrag", "Not selected":"Niet geselecteerd",
+        "Why this route?":"Waarom deze route?", "View summary":"Bekijk samenvatting", "Conversation summary":"Gesprekssamenvatting", "Your":"Jouw", "retail performance opportunity":"retail performance opportunity", "Potential payback":"Potentiële terugverdientijd", "Indicative extra profit / year":"Indicatieve extra winst / jaar", "Stores in scope":"Winkels in scope", "Suggested next step":"Voorgestelde volgende stap", "Start new scan":"Nieuwe scan starten",
+        "Live scan summary":"Live scan summary", "Retail Chain performance scan":"Retailketen performance scan", "Shopping Centre performance scan":"Winkelcentrum performance scan", "PFM route":"PFM route", "Realistic profit":"Realistische winst", "Surface":"Oppervlakte"
+      },
+      DE: {
+        "today?":"", "Context":"Kontext", "Performance leaks":"Performance-Leaks", "Insight fit":"Insight-Fit", "Impact model":"Impact-Modell", "Route":"Route", "Summary":"Zusammenfassung",
+        "Find the hidden potential in":"Finden Sie das verborgene Potenzial in", "Company":"Unternehmen",
+        "A guided performance conversation that turns store context, customer behaviour and business challenges into clear retail opportunities.":"Ein geführtes Performance-Gespräch, das Filialkontext, Kundenverhalten und Geschäftsfragen in klare Retail-Chancen übersetzt.",
+        "Start with context":"Mit Kontext starten", "Retail Chain":"Filialkette", "Shopping Centre":"Shopping-Center",
+        "Stores, conversion, staffing and portfolio potential.":"Filialen, Conversion, Personaleinsatz und Portfoliopotenzial.", "Entrances, tenant value, zones and asset performance.":"Eingänge, Mieterwert, Zonen und Asset Performance.",
+        "PFM consultant":"PFM-Berater", "Use this scan together with PFM to identify the most relevant performance opportunities.":"Nutzen Sie diesen Scan gemeinsam mit PFM, um die relevantesten Performance-Chancen zu identifizieren.",
+        "Retail diagnosis":"Retail-Diagnose", "Shopping centre diagnosis":"Shopping-Center-Diagnose", "Where does performance":"Wo verliert Performance", "Where does asset value":"Wo verliert Asset Value", "leak":"heute?",
+        "Select the situations that are most recognisable for your stores. PFM will translate them into relevant performance insights and next steps.":"Wählen Sie die Situationen, die für Ihre Filialen am erkennbarsten sind. PFM übersetzt sie in relevante Performance-Insights und nächste Schritte.",
+        "Choose the asset, leasing, flow, parking, catchment and portfolio challenges that are most relevant for your organisation.":"Wählen Sie die Asset-, Leasing-, Flow-, Parking-, Catchment- und Portfolio-Herausforderungen, die für Ihre Organisation relevant sind.",
+        "Selected":"Ausgewählt", "Select":"Auswählen", "Show insight fit":"Insight-Fit anzeigen", "PFM fit":"PFM-Fit", "Translate pains into":"Pains übersetzen in", "actionable insights":"handlungsfähige Insights",
+        "This is the practical insight layer: what PFM helps you see, explain and improve across stores.":"Dies ist die praktische Insight-Ebene: was PFM hilft, über Filialen hinweg zu sehen, zu erklären und zu verbessern.",
+        "Suggested sales story":"Vorgeschlagene Sales Story", "Build impact model":"Impact-Modell bauen", "Build value model":"Value-Modell bauen", "Business assumptions":"Business-Annahmen", "Editable in this step for scenario testing.":"In diesem Schritt für Szenariotests anpassbar.",
+        "Footfall / week per store":"Footfall / Woche je Filiale", "Current conversion rate":"Aktuelle Conversion Rate", "Average ticket value":"Durchschnittlicher Bonwert", "Gross margin":"Bruttomarge", "Conversion uplift through PFM":"Conversion-Uplift durch PFM", "ATV uplift":"ATV-Uplift", "Realisation scenario":"Realisierungsszenario",
+        "ROI output":"ROI-Output", "Same logic as the official calculator.":"Gleiche Logik wie der offizielle Rechner.", "Payback time":"Payback-Zeit", "Based on realistic profit after monthly service.":"Basierend auf realistischem Gewinn nach monatlichem Service.",
+        "Revenue baseline / year":"Umsatz-Baseline / Jahr", "Total CAPEX":"Gesamte CAPEX", "Monthly service":"Monatlicher Service", "Realistic extra profit / year":"Realistischer Zusatzgewinn / Jahr", "ROI over horizon":"ROI über Laufzeit", "Choose route":"Route wählen",
+        "Recommended route":"Empfohlene Route", "Your suggested":"Ihre vorgeschlagene", "PFM Intelligence route":"PFM Intelligence Route", "Monthly service from current scope":"Monatlicher Service aus aktueller Scope", "Measure the basics reliably":"Die Basis zuverlässig messen", "Not selected":"Nicht ausgewählt", "View summary":"Zusammenfassung anzeigen", "Conversation summary":"Gesprächszusammenfassung", "Potential payback":"Potenzieller Payback", "Indicative extra profit / year":"Indikativer Zusatzgewinn / Jahr", "Stores in scope":"Filialen im Scope", "Suggested next step":"Vorgeschlagener nächster Schritt", "Start new scan":"Neuen Scan starten", "Live scan summary":"Live Scan Summary", "Retail Chain performance scan":"Retail Chain Performance Scan", "PFM route":"PFM-Route", "Realistic profit":"Realistischer Gewinn"
+      },
+      FR: {
+        "today?":"", "Context":"Contexte", "Performance leaks":"Fuites de performance", "Insight fit":"Adéquation insights", "Impact model":"Modèle d’impact", "Route":"Route", "Summary":"Résumé",
+        "Find the hidden potential in":"Trouvez le potentiel caché de", "Company":"Entreprise",
+        "A guided performance conversation that turns store context, customer behaviour and business challenges into clear retail opportunities.":"Une conversation guidée qui transforme le contexte magasin, le comportement client et les enjeux business en opportunités retail claires.",
+        "Start with context":"Commencer par le contexte", "Retail Chain":"Réseau retail", "Shopping Centre":"Centre commercial", "Stores, conversion, staffing and portfolio potential.":"Magasins, conversion, staffing et potentiel du portefeuille.", "Entrances, tenant value, zones and asset performance.":"Entrées, valeur locataire, zones et performance de l’actif.",
+        "PFM consultant":"Consultant PFM", "Use this scan together with PFM to identify the most relevant performance opportunities.":"Utilisez ce scan avec PFM pour identifier les opportunités de performance les plus pertinentes.",
+        "Retail diagnosis":"Diagnostic retail", "Shopping centre diagnosis":"Diagnostic centre commercial", "Where does performance":"Où la performance", "Where does asset value":"Où la valeur de l’actif", "leak":"se perd-elle ?", "Selected":"Sélectionné", "Select":"Sélectionner", "Show insight fit":"Afficher l’adéquation insights", "PFM fit":"Fit PFM",
+        "Translate pains into":"Transformer les pains en", "actionable insights":"insights actionnables", "This is the practical insight layer: what PFM helps you see, explain and improve across stores.":"C’est la couche d’insights pratique : ce que PFM vous aide à voir, expliquer et améliorer dans les magasins.",
+        "Suggested sales story":"Narratif commercial suggéré", "Build impact model":"Construire le modèle d’impact", "Build value model":"Construire le modèle de valeur", "Business assumptions":"Hypothèses business", "Editable in this step for scenario testing.":"Modifiable à cette étape pour tester des scénarios.",
+        "Footfall / week per store":"Fréquentation / semaine / magasin", "Current conversion rate":"Taux de conversion actuel", "Average ticket value":"Ticket moyen", "Gross margin":"Marge brute", "Conversion uplift through PFM":"Gain de conversion via PFM", "ATV uplift":"Gain de panier moyen", "Realisation scenario":"Scénario de réalisation",
+        "ROI output":"Sortie ROI", "Same logic as the official calculator.":"Même logique que le calculateur officiel.", "Payback time":"Temps de retour", "Based on realistic profit after monthly service.":"Basé sur le profit réaliste après service mensuel.", "Revenue baseline / year":"Chiffre d’affaires de base / an", "Total CAPEX":"CAPEX total", "Monthly service":"Service mensuel", "Realistic extra profit / year":"Profit additionnel réaliste / an", "ROI over horizon":"ROI sur l’horizon", "Choose route":"Choisir la route", "Recommended route":"Route recommandée", "Your suggested":"Votre", "PFM Intelligence route":"route PFM Intelligence", "Monthly service from current scope":"Service mensuel selon le scope actuel", "Measure the basics reliably":"Mesurer les bases de manière fiable", "Not selected":"Non sélectionné", "View summary":"Voir le résumé", "Conversation summary":"Résumé de conversation", "Potential payback":"Retour potentiel", "Indicative extra profit / year":"Profit additionnel indicatif / an", "Stores in scope":"Magasins dans le scope", "Suggested next step":"Prochaine étape suggérée", "Start new scan":"Nouveau scan", "Live scan summary":"Résumé live du scan", "PFM route":"Route PFM", "Realistic profit":"Profit réaliste"
+      },
+      ES: {
+        "today?":"", "Context":"Contexto", "Performance leaks":"Fugas de rendimiento", "Insight fit":"Ajuste de insights", "Impact model":"Modelo de impacto", "Route":"Ruta", "Summary":"Resumen",
+        "Find the hidden potential in":"Encuentra el potencial oculto en", "Company":"Empresa", "A guided performance conversation that turns store context, customer behaviour and business challenges into clear retail opportunities.":"Una conversación guiada de rendimiento que convierte el contexto de tienda, el comportamiento del cliente y los retos del negocio en oportunidades retail claras.",
+        "Start with context":"Empezar con contexto", "Retail Chain":"Cadena retail", "Shopping Centre":"Centro comercial", "Stores, conversion, staffing and portfolio potential.":"Tiendas, conversión, staffing y potencial de cartera.", "Entrances, tenant value, zones and asset performance.":"Entradas, valor de tenants, zonas y performance del activo.", "PFM consultant":"Consultor PFM", "Use this scan together with PFM to identify the most relevant performance opportunities.":"Utiliza este scan con PFM para identificar las oportunidades de rendimiento más relevantes.",
+        "Retail diagnosis":"Diagnóstico retail", "Shopping centre diagnosis":"Diagnóstico centro comercial", "Where does performance":"Dónde se pierde el rendimiento", "Where does asset value":"Dónde se pierde el valor del activo", "leak":"hoy?", "Selected":"Seleccionado", "Select":"Seleccionar", "Show insight fit":"Mostrar ajuste de insights", "PFM fit":"Fit PFM", "Translate pains into":"Convertir pains en", "actionable insights":"insights accionables", "This is the practical insight layer: what PFM helps you see, explain and improve across stores.":"Esta es la capa práctica de insights: lo que PFM ayuda a ver, explicar y mejorar en las tiendas.", "Suggested sales story":"Historia comercial sugerida", "Build impact model":"Crear modelo de impacto", "Build value model":"Crear modelo de valor", "Business assumptions":"Supuestos de negocio", "Editable in this step for scenario testing.":"Editable en este paso para probar escenarios.", "Footfall / week per store":"Afluencia / semana / tienda", "Current conversion rate":"Tasa de conversión actual", "Average ticket value":"Ticket medio", "Gross margin":"Margen bruto", "Conversion uplift through PFM":"Mejora de conversión con PFM", "ATV uplift":"Mejora de ticket medio", "Realisation scenario":"Escenario de realización", "ROI output":"Salida ROI", "Same logic as the official calculator.":"Misma lógica que la calculadora oficial.", "Payback time":"Payback", "Revenue baseline / year":"Ingresos base / año", "Total CAPEX":"CAPEX total", "Monthly service":"Servicio mensual", "Realistic extra profit / year":"Beneficio extra realista / año", "ROI over horizon":"ROI del periodo", "Choose route":"Elegir ruta", "Recommended route":"Ruta recomendada", "Your suggested":"Tu", "PFM Intelligence route":"ruta PFM Intelligence", "Monthly service from current scope":"Servicio mensual del alcance actual", "Measure the basics reliably":"Medir lo básico de forma fiable", "Not selected":"No seleccionado", "View summary":"Ver resumen", "Conversation summary":"Resumen de conversación", "Potential payback":"Payback potencial", "Indicative extra profit / year":"Beneficio extra indicativo / año", "Stores in scope":"Tiendas en alcance", "Suggested next step":"Siguiente paso sugerido", "Start new scan":"Nuevo scan", "Live scan summary":"Resumen live del scan", "PFM route":"Ruta PFM", "Realistic profit":"Beneficio realista"
+      }
+    };
+
+
+
+    // Customer-facing content translations for dynamic cards, routes and summaries.
+    // The earlier language layer translated static labels only; these maps keep the
+    // generated content blocks in sync when switching language.
+    const CONTENT_TRANSLATIONS = {
+      NL: {
+        "Retail diagnosis":"Retaildiagnose",
+        "Shopping centre diagnosis":"Winkelcentrumdiagnose",
+        "Where does performance":"Waar lekt performance",
+        "Where does asset value":"Waar lekt assetwaarde",
+        "leak":"vandaag?",
+        "today?":"",
+        "No goals selected":"Geen uitdagingen geselecteerd", "performance scan":"performance scan", "Locations":"Locaties", "Weekly footfall":"Wekelijkse footfall",
+        "Active":"Actief",
+        "Scope":"Scope",
+        "Units":"Units",
+        "TCO":"TCO",
+        "Back":"Terug",
+        "Next":"Verder",
+        "Essential":"Essential",
+        "Professional":"Professional",
+        "Enterprise":"Enterprise",
+        "Measure the basics reliably":"Meet de basis betrouwbaar",
+        "Understand who visits and what attracts them":"Begrijp wie bezoekt en wat hen aantrekt",
+        "Analyse journeys, zones and in-store behaviour":"Analyseer journeys, zones en winkelgedrag",
+        "For retailers that first need a trusted baseline for store traffic and conversion potential.":"Voor retailers die eerst een betrouwbare basis nodig hebben voor bezoekersstromen en conversiepotentieel.",
+        "For retailers that want visitor profile insights, capture-rate context and richer performance explanation.":"Voor retailers die bezoekersprofielen, capture-rate context en rijkere performanceverklaring willen.",
+        "For retailers that want in-store analytics, zoning, dwell, Re-ID feasibility or advanced reporting.":"Voor retailers die in-store analytics, zoning, dwell, Re-ID feasibility of geavanceerde rapportage willen.",
+        "Advantage Portal":"Advantage Portal", "Data management":"Datamanagement", "Footfall":"Footfall", "Portfolio-wide report":"Portfolio-breed rapport", "Sensor management":"Sensormanagement", "Remote support":"Remote support", "Conversion rate":"Conversieratio", "Essential included":"Essential inbegrepen", "Age / gender / group options":"Leeftijd / gender / groep opties", "Occupancy":"Occupancy", "Capture rate":"Capture rate", "Professional included":"Professional inbegrepen", "Re-ID / dwell":"Re-ID / dwell", "Heat mapping":"Heat mapping", "Sales-data conversion report":"Sales-data conversierapport",
+        "We do not have a trusted performance baseline":"We hebben geen betrouwbare performancebasis",
+        "We know sales or transactions, but we do not know how many people actually entered, which makes store performance hard to judge.":"We kennen omzet of transacties, maar niet hoeveel mensen daadwerkelijk binnenkwamen. Daardoor is winkelperformance lastig te beoordelen.",
+        "Trusted Footfall & Conversion Baseline":"Betrouwbare footfall- en conversiebasis",
+        "Create a reliable baseline for footfall, conversion and store potential across every location.":"Creëer een betrouwbare basis voor footfall, conversie en winkelpotentieel per locatie.",
+        "Do you know how many visitors you need to create today’s sales?":"Weet je hoeveel bezoekers nodig zijn voor de omzet van vandaag?",
+        "Is the data trusted enough to compare stores?":"Is de data betrouwbaar genoeg om winkels te vergelijken?",
+        "We have visitors, but not enough buyers":"We hebben bezoekers, maar te weinig kopers",
+        "Traffic is visible, but the moment, store or reason for conversion leakage is still unclear.":"Traffic is zichtbaar, maar het moment, de winkel of de oorzaak van conversielekkage is nog onduidelijk.",
+        "Conversion Leak Intelligence":"Conversielek-intelligence",
+        "Identify which stores, days and hours have enough visitors but miss sales potential.":"Bepaal welke winkels, dagen en uren genoeg bezoekers hebben maar salespotentieel missen.",
+        "Which stores have good traffic but weak sales?":"Welke winkels hebben goede traffic maar zwakke sales?",
+        "When does conversion drop?":"Wanneer daalt conversie?",
+        "We do not know if the problem is the street or the store":"We weten niet of het probleem op straat of in de winkel zit",
+        "When visits drop, teams debate whether the street is quieter or the store has lost attraction power.":"Als bezoek daalt, is onduidelijk of de straat rustiger is of de winkel minder aantrekkingskracht heeft.",
+        "Capture Rate & Street Potential Intelligence":"Capture Rate & Street Potential Intelligence",
+        "Separate external traffic decline from storefront attraction and calculate capture rate by day, week and campaign.":"Scheid externe traffic-daling van winkel­aantrekkingskracht en bereken capture rate per dag, week en campagne.",
+        "Are fewer people entering because the street is quieter?":"Komen er minder mensen binnen omdat de straat rustiger is?",
+        "Is the window or facade pulling enough people in?":"Trekt de etalage of gevel genoeg mensen naar binnen?",
+        "Families and groups make conversion look worse than it is":"Families en groepen laten conversie slechter lijken dan die is",
+        "A store can look underperforming when many visitors come in as families, friends or groups where only one person is likely to buy.":"Een winkel kan onderpresteren lijken wanneer veel bezoekers als gezin, vrienden of groep binnenkomen en slechts één persoon koopt.",
+        "Buying Unit Conversion Context":"Buying Unit Conversion Context",
+        "Add buying-unit context so conversion discussions become fairer and more useful for store teams.":"Voeg buying-unit context toe zodat conversiegesprekken eerlijker en bruikbaarder worden voor winkelteams.",
+        "Do weekend numbers punish stores with family traffic?":"Straffen weekendcijfers winkels met veel familietraffic?",
+        "Are you measuring people or real buying opportunities?":"Meet je personen of echte koopkansen?",
+        "We do not know who is entering our stores":"We weten niet wie onze winkels binnenkomt",
+        "Footfall shows how many people enter, but not whether the visitor mix is changing by gender, adults, children, families, groups or later age categories.":"Footfall laat zien hoeveel mensen binnenkomen, maar niet of de bezoekersmix verandert naar gender, volwassenen, kinderen, families, groepen of later leeftijdscategorieën.",
+        "Visitor Profile & Demographic Intelligence":"Visitor Profile & Demographic Intelligence",
+        "Activate visitor profile datasets so teams can understand who visits, when the mix changes and which stores attract the right audience.":"Activeer bezoekersprofiel-datasets zodat teams begrijpen wie bezoekt, wanneer de mix verandert en welke winkels de juiste doelgroep aantrekken.",
+        "Do you know if the right audience is entering?":"Weet je of de juiste doelgroep binnenkomt?",
+        "Does the visitor mix differ by store, day or campaign?":"Verschilt de bezoekersmix per winkel, dag of campagne?",
+        "Stores are compared unfairly":"Winkels worden oneerlijk vergeleken",
+        "Stores are compared on totals, while size, location, store type, opening hours and traffic potential differ strongly.":"Winkels worden op totalen vergeleken, terwijl formaat, locatie, winkeltype, openingstijden en trafficpotentieel sterk verschillen.",
+        "Portfolio Benchmark Intelligence":"Portfolio Benchmark Intelligence",
+        "Create fair peer groups and reveal real underperformance, hidden potential and benchmark gaps.":"Maak eerlijke peergroepen en toon echte underperformance, verborgen potentieel en benchmark gaps.",
+        "Do you compare stores by type, size and context?":"Vergelijk je winkels op type, grootte en context?",
+        "Which locations deserve attention first?":"Welke locaties verdienen eerst aandacht?",
+        "Staff planning and service moments are based too much on feeling":"Personeelsplanning en servicemomenten zijn te veel op gevoel gebaseerd",
+        "Busy moments, quiet hours and service opportunities are not always visible in time for store teams to act.":"Drukke momenten, rustige uren en servicekansen zijn niet altijd tijdig zichtbaar voor winkelteams.",
+        "Staffing & Service Moment Intelligence":"Staffing & Service Moment Intelligence",
+        "Use footfall and conversion patterns to support better staffing, service timing and weekly store actions.":"Gebruik footfall- en conversiepatronen voor betere personeelsinzet, servicetiming en wekelijkse winkelacties.",
+        "Which hours are busy but commercially weak?":"Welke uren zijn druk maar commercieel zwak?",
+        "Are schedules based on real demand?":"Zijn roosters gebaseerd op echte vraag?",
+        "People step in, hesitate and leave again":"Mensen stappen binnen, twijfelen en vertrekken weer",
+        "Some locations lose visitors at the first metres of the store because of layout, stairs, entrance friction or unclear merchandising.":"Sommige locaties verliezen bezoekers in de eerste meters door layout, trappen, entreefrictie of onduidelijke merchandising.",
+        "Entrance Bounce & First-Zone Intelligence":"Entrance Bounce & First-Zone Intelligence",
+        "Measure whether people truly enter, where they hesitate and how the first zone affects conversion opportunity.":"Meet of mensen echt binnenkomen, waar ze twijfelen en hoe de eerste zone conversiekansen beïnvloedt.",
+        "Do people actually enter the store or only the doorway?":"Komen mensen echt de winkel in of alleen tot de deuropening?",
+        "Where should the visitor become a counted opportunity?":"Waar wordt de bezoeker een getelde kans?",
+        "We do not know what happens after people enter":"We weten niet wat er gebeurt nadat mensen binnenkomen",
+        "Entrance counts do not explain how shoppers move, which zones attract attention or where layout creates missed opportunities.":"Entreetellingen verklaren niet hoe shoppers bewegen, welke zones aandacht trekken of waar layout kansen mist.",
+        "In-store Journey & Zone Intelligence":"In-store Journey & Zone Intelligence",
+        "Understand zone traffic, dwell, heatmaps and journey behaviour for pilot stores, flagships or key formats.":"Begrijp zone-traffic, dwell, heatmaps en journeygedrag voor pilots, flagships of kernformats.",
+        "Which areas attract traffic but do not convert?":"Welke zones trekken traffic maar converteren niet?",
+        "Does layout or product category explain performance?":"Verklaart layout of categorie de performance?",
+        "Expansion decisions still rely too much on gut feel":"Expansiebeslissingen leunen nog te veel op gevoel",
+        "New locations are evaluated with experience and external data, but not always connected to real traffic and conversion potential.":"Nieuwe locaties worden beoordeeld met ervaring en externe data, maar niet altijd gekoppeld aan echte traffic en conversiepotentieel.",
+        "Location Potential & Expansion Intelligence":"Location Potential & Expansion Intelligence",
+        "Use traffic, catchment and performance logic to support opening, relocation and format decisions.":"Gebruik traffic-, catchment- en performancelogica voor openings-, relocatie- en formatbeslissingen.",
+        "Is this street right for your customer profile?":"Past deze straat bij je klantprofiel?",
+        "Do you know expected traffic before signing?":"Ken je de verwachte traffic vóór ondertekening?",
+        "The data exists, but teams do not act on it enough":"De data bestaat, maar teams handelen er nog onvoldoende naar",
+        "Dashboards are available, but teams need clearer recommendations, priorities and follow-up rhythm.":"Dashboards zijn beschikbaar, maar teams hebben duidelijkere aanbevelingen, prioriteiten en opvolgritme nodig.",
+        "Performance Activation & Weekly Action Intelligence":"Performance Activation & Weekly Action Intelligence",
+        "Turn data into weekly focus, store actions, regional priorities and management conversations.":"Zet data om in wekelijkse focus, winkelacties, regionale prioriteiten en managementgesprekken.",
+        "Do store teams know what to do next week?":"Weten winkelteams wat ze volgende week moeten doen?",
+        "Can regional managers prioritise action?":"Kunnen regiomanagers acties prioriteren?"
+      },
+      DE: {}, FR: {}, ES: {}
+    };
+
+    CONTENT_TRANSLATIONS.DE = {
+      "Retail diagnosis":"Retail-Diagnose", "Shopping centre diagnosis":"Shopping-Center-Diagnose", "Where does performance":"Wo verliert Performance", "Where does asset value":"Wo verliert der Standortwert", "today?":"", "leak":"heute?",
+      "Selected":"Ausgewählt", "Select":"Auswählen", "No goals selected":"Keine Themen ausgewählt", "performance scan":"Performance-Scan", "Locations":"Standorte", "Weekly footfall":"Besucherfrequenz pro Woche", "Back":"Zurück", "Next":"Weiter", "Not selected":"Nicht ausgewählt", "Active":"Aktiv",
+      "Measure the basics reliably":"Die Basis zuverlässig messen", "Understand who visits and what attracts them":"Verstehen, wer kommt und was anzieht", "Analyse journeys, zones and in-store behaviour":"Journeys, Zonen und Verhalten im Store analysieren",
+      "For retailers that first need a trusted baseline for store traffic and conversion potential.":"Für Händler, die zuerst eine verlässliche Basis für Store Traffic und Conversion-Potenzial benötigen.",
+      "For retailers that want visitor profile insights, capture-rate context and richer performance explanation.":"Für Händler, die Besucherprofile, Capture-Rate-Kontext und mehr Performance-Erklärung benötigen.",
+      "For retailers that want in-store analytics, zoning, dwell, Re-ID feasibility or advanced reporting.":"Für Händler, die In-Store-Analytics, Zoning, Verweildauer, Re-ID-Prüfung oder erweitertes Reporting benötigen.",
+      "We do not have a trusted performance baseline":"Wir haben keine verlässliche Performance-Basis", "We know sales or transactions, but we do not know how many people actually entered, which makes store performance hard to judge.":"Wir kennen Umsatz oder Transaktionen, aber nicht, wie viele Menschen den Store tatsächlich betreten haben. Dadurch ist Store-Performance schwer zu beurteilen.", "Trusted Footfall & Conversion Baseline":"Verlässliche Footfall- & Conversion-Basis", "Create a reliable baseline for footfall, conversion and store potential across every location.":"Schaffen Sie eine verlässliche Basis für Footfall, Conversion und Store-Potenzial an jedem Standort.", "Do you know how many visitors you need to create today’s sales?":"Wissen Sie, wie viele Besucher Sie für den heutigen Umsatz brauchen?", "Is the data trusted enough to compare stores?":"Sind die Daten verlässlich genug, um Stores zu vergleichen?", "We have visitors, but not enough buyers":"Wir haben Besucher, aber zu wenige Käufer", "Traffic is visible, but the moment, store or reason for conversion leakage is still unclear.":"Traffic ist sichtbar, aber Zeitpunkt, Standort oder Ursache der Conversion-Lücke sind noch unklar.", "Conversion Leak Intelligence":"Conversion-Leak-Intelligence", "Identify which stores, days and hours have enough visitors but miss sales potential.":"Erkennen Sie, welche Stores, Tage und Stunden genug Besucher haben, aber Sales-Potenzial verpassen.", "Which stores have good traffic but weak sales?":"Welche Stores haben guten Traffic, aber schwache Sales?", "When does conversion drop?":"Wann sinkt die Conversion?", "We do not know if the problem is the street or the store":"Wir wissen nicht, ob das Problem auf der Straße oder im Store liegt", "Families and groups make conversion look worse than it is":"Familien und Gruppen lassen Conversion schlechter aussehen", "We do not know who is entering our stores":"Wir wissen nicht, wer unsere Stores betritt", "Stores are compared unfairly":"Stores werden unfair verglichen", "Staff planning and service moments are based too much on feeling":"Personaleinsatz und Servicemomente basieren zu stark auf Gefühl", "People step in, hesitate and leave again":"Menschen treten ein, zögern und gehen wieder", "We do not know what happens after people enter":"Wir wissen nicht, was nach dem Eintritt passiert", "Expansion decisions still rely too much on gut feel":"Expansionsentscheidungen beruhen noch zu stark auf Bauchgefühl", "The data exists, but teams do not act on it enough":"Die Daten sind da, aber Teams handeln noch zu wenig danach"
+    };
+    CONTENT_TRANSLATIONS.FR = {
+      "Retail diagnosis":"Diagnostic retail", "Shopping centre diagnosis":"Diagnostic centre commercial", "Where does performance":"Où la performance", "Where does asset value":"Où la valeur de l’actif", "today?":"", "leak":"se perd-elle ?",
+      "Selected":"Sélectionné", "Select":"Sélectionner", "No goals selected":"Aucun sujet sélectionné", "performance scan":"scan de performance", "Locations":"Sites", "Weekly footfall":"Fréquentation hebdomadaire", "Back":"Retour", "Next":"Suivant", "Not selected":"Non sélectionné", "Active":"Actif",
+      "Measure the basics reliably":"Mesurer les fondamentaux de façon fiable", "Understand who visits and what attracts them":"Comprendre qui visite et ce qui les attire", "Analyse journeys, zones and in-store behaviour":"Analyser les parcours, zones et comportements en magasin",
+      "For retailers that first need a trusted baseline for store traffic and conversion potential.":"Pour les retailers qui ont d’abord besoin d’une base fiable pour le trafic magasin et le potentiel de conversion.",
+      "For retailers that want visitor profile insights, capture-rate context and richer performance explanation.":"Pour les retailers qui veulent des profils visiteurs, du contexte capture-rate et une meilleure explication de la performance.",
+      "For retailers that want in-store analytics, zoning, dwell, Re-ID feasibility or advanced reporting.":"Pour les retailers qui veulent de l’in-store analytics, du zoning, du dwell, une faisabilité Re-ID ou du reporting avancé.",
+      "We do not have a trusted performance baseline":"Nous n’avons pas de base de performance fiable", "We know sales or transactions, but we do not know how many people actually entered, which makes store performance hard to judge.":"Nous connaissons les ventes ou transactions, mais pas le nombre réel d’entrées. La performance magasin est donc difficile à juger.", "Trusted Footfall & Conversion Baseline":"Base fiable footfall & conversion", "Create a reliable baseline for footfall, conversion and store potential across every location.":"Créer une base fiable pour le footfall, la conversion et le potentiel magasin sur chaque site.", "Do you know how many visitors you need to create today’s sales?":"Savez-vous combien de visiteurs sont nécessaires pour générer les ventes du jour ?", "Is the data trusted enough to compare stores?":"Les données sont-elles assez fiables pour comparer les magasins ?", "We have visitors, but not enough buyers":"Nous avons des visiteurs, mais pas assez d’acheteurs", "Traffic is visible, but the moment, store or reason for conversion leakage is still unclear.":"Le trafic est visible, mais le moment, le magasin ou la raison de la fuite de conversion reste incertain.", "Conversion Leak Intelligence":"Intelligence des fuites de conversion", "Identify which stores, days and hours have enough visitors but miss sales potential.":"Identifier les magasins, jours et heures avec assez de visiteurs mais un potentiel de vente manqué.", "Which stores have good traffic but weak sales?":"Quels magasins ont un bon trafic mais des ventes faibles ?", "When does conversion drop?":"Quand la conversion baisse-t-elle ?", "We do not know if the problem is the street or the store":"Nous ne savons pas si le problème vient de la rue ou du magasin", "Families and groups make conversion look worse than it is":"Les familles et groupes rendent la conversion moins bonne qu’elle ne l’est", "We do not know who is entering our stores":"Nous ne savons pas qui entre dans nos magasins", "Stores are compared unfairly":"Les magasins sont comparés de façon injuste", "Staff planning and service moments are based too much on feeling":"Le planning et les moments de service reposent trop sur l’intuition", "People step in, hesitate and leave again":"Les visiteurs entrent, hésitent et repartent", "We do not know what happens after people enter":"Nous ne savons pas ce qui se passe après l’entrée", "Expansion decisions still rely too much on gut feel":"Les décisions d’expansion reposent encore trop sur l’intuition", "The data exists, but teams do not act on it enough":"Les données existent, mais les équipes ne les utilisent pas assez"
+    };
+    CONTENT_TRANSLATIONS.ES = {
+      "Retail diagnosis":"Diagnóstico retail", "Shopping centre diagnosis":"Diagnóstico centro comercial", "Where does performance":"Dónde se pierde el rendimiento", "Where does asset value":"Dónde se pierde el valor del activo", "today?":"", "leak":"hoy?",
+      "Selected":"Seleccionado", "Select":"Seleccionar", "No goals selected":"Ningún tema seleccionado", "performance scan":"scan de rendimiento", "Locations":"Ubicaciones", "Weekly footfall":"Footfall semanal", "Back":"Atrás", "Next":"Siguiente", "Not selected":"No seleccionado", "Active":"Activo",
+      "Measure the basics reliably":"Medir lo básico con fiabilidad", "Understand who visits and what attracts them":"Entender quién visita y qué les atrae", "Analyse journeys, zones and in-store behaviour":"Analizar journeys, zonas y comportamiento en tienda",
+      "For retailers that first need a trusted baseline for store traffic and conversion potential.":"Para retailers que primero necesitan una base fiable de tráfico y potencial de conversión.",
+      "For retailers that want visitor profile insights, capture-rate context and richer performance explanation.":"Para retailers que quieren perfiles de visitantes, contexto de capture rate y mejor explicación de performance.",
+      "For retailers that want in-store analytics, zoning, dwell, Re-ID feasibility or advanced reporting.":"Para retailers que quieren analítica en tienda, zoning, dwell, viabilidad Re-ID o reporting avanzado.",
+      "We do not have a trusted performance baseline":"No tenemos una base de rendimiento fiable", "We know sales or transactions, but we do not know how many people actually entered, which makes store performance hard to judge.":"Conocemos ventas o transacciones, pero no cuántas personas entraron realmente. Eso dificulta evaluar el rendimiento de la tienda.", "Trusted Footfall & Conversion Baseline":"Base fiable de footfall y conversión", "Create a reliable baseline for footfall, conversion and store potential across every location.":"Crear una base fiable de footfall, conversión y potencial de tienda en cada ubicación.", "Do you know how many visitors you need to create today’s sales?":"¿Sabes cuántos visitantes necesitas para generar las ventas de hoy?", "Is the data trusted enough to compare stores?":"¿Los datos son suficientemente fiables para comparar tiendas?", "We have visitors, but not enough buyers":"Tenemos visitantes, pero no suficientes compradores", "Traffic is visible, but the moment, store or reason for conversion leakage is still unclear.":"El tráfico es visible, pero el momento, la tienda o la razón de la fuga de conversión aún no está claro.", "Conversion Leak Intelligence":"Inteligencia de fuga de conversión", "Identify which stores, days and hours have enough visitors but miss sales potential.":"Identificar qué tiendas, días y horas tienen suficientes visitantes pero pierden potencial de ventas.", "Which stores have good traffic but weak sales?":"¿Qué tiendas tienen buen tráfico pero ventas débiles?", "When does conversion drop?":"¿Cuándo baja la conversión?", "We do not know if the problem is the street or the store":"No sabemos si el problema está en la calle o en la tienda", "Families and groups make conversion look worse than it is":"Familias y grupos hacen que la conversión parezca peor", "We do not know who is entering our stores":"No sabemos quién entra en nuestras tiendas", "Stores are compared unfairly":"Las tiendas se comparan de forma injusta", "Staff planning and service moments are based too much on feeling":"La planificación de personal y servicio se basa demasiado en intuición", "People step in, hesitate and leave again":"La gente entra, duda y se va", "We do not know what happens after people enter":"No sabemos qué pasa después de que entran", "Expansion decisions still rely too much on gut feel":"Las decisiones de expansión dependen demasiado de la intuición", "The data exists, but teams do not act on it enough":"Los datos existen, pero los equipos aún no actúan suficiente"
+    };
+
+    function TR(text) {
+      const value = String(text ?? "").trim().replace(/\s+/g, " ");
+      if (!value || state.lang === "EN") return text;
+      return (CONTENT_TRANSLATIONS[state.lang] && CONTENT_TRANSLATIONS[state.lang][value]) || (UI_TRANSLATIONS[state.lang] && UI_TRANSLATIONS[state.lang][value]) || text;
+    }
+
+    function applyTranslations(root = document) {
+      if (state.lang === "EN") return;
+      const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
+        acceptNode(node) {
+          if (!node.nodeValue || !node.nodeValue.trim()) return NodeFilter.FILTER_REJECT;
+          const parent = node.parentElement;
+          if (!parent || parent.closest('script,style')) return NodeFilter.FILTER_REJECT;
+          return NodeFilter.FILTER_ACCEPT;
+        }
+      });
+      const nodes = [];
+      while (walker.nextNode()) nodes.push(walker.currentNode);
+      nodes.forEach(node => {
+        const raw = node.nodeValue;
+        const leading = raw.match(/^\s*/)[0];
+        const trailing = raw.match(/\s*$/)[0];
+        const key = raw.trim().replace(/\s+/g, " ");
+        const pageTranslation = Object.entries(PAGE_I18N.EN || {}).find(([, enValue]) => enValue === key);
+        const translated =
+          (CONTENT_TRANSLATIONS[state.lang] && CONTENT_TRANSLATIONS[state.lang][key]) ||
+          (UI_TRANSLATIONS[state.lang] && UI_TRANSLATIONS[state.lang][key]) ||
+          (pageTranslation && PAGE_I18N[state.lang] && PAGE_I18N[state.lang][pageTranslation[0]]);
+        if (translated) node.nodeValue = leading + translated + trailing;
+      });
+    }
+    const PAGE_I18N = {
+      EN: {
+        retailDiagnosis: "Retail diagnosis",
+        shoppingDiagnosis: "Shopping centre diagnosis",
+        retailLeakTitle: "Where does performance leak today?",
+        shoppingLeakTitle: "Where does asset value leak today?",
+        retailLeakIntro: "Select the situations that are most recognisable for your stores. PFM will translate them into relevant performance insights and next steps.",
+        shoppingLeakIntro: "Choose the asset, leasing, flow, parking, catchment and portfolio challenges that are most relevant for your organisation.",
+        pfmFit: "PFM fit",
+        insightTitle: "Translate pains into actionable insights",
+        insightIntroRetail: "This is the practical insight layer: what PFM helps you see, explain and improve across stores.",
+        insightIntroShopping: "This is how PFM translates the selected challenges into an asset intelligence approach: from visitor flow and catchment to tenant, parking and portfolio insight.",
+        suggestedSalesStory: "Suggested sales story",
+        salesStoryRetail: "PFM does not only count visitors. We connect movement, sales and context to show where retail performance leaks — and what action creates measurable upside.",
+        salesStoryRetailSub: "Use this page as the bridge from commercial challenges to measurable retail performance improvement.",
+        salesStoryShopping: "PFM helps shopping centres move from counting entrances to understanding asset performance: traffic, zones, tenants, parking, catchment, leasing and portfolio health in one intelligence layer.",
+        salesStoryShoppingSub: "Use this page to align on the value story: which asset challenges matter most, which insights are needed, and which next step creates the strongest business case.",
+        showInsightFit: "Show insight fit", buildImpactModel: "Build impact model", buildValueModel: "Build value model",
+        selected: "Selected", select: "Select", back: "Back", next: "Next",
+        liveScanSummary: "Live scan summary", performanceScan: "performance scan", locations: "Locations", weeklyFootfall: "Weekly footfall", pfmRoute: "PFM route", realisticProfit: "Realistic profit",
+        recommendedRoute: "Recommended route", monthlyServiceFromScope: "Monthly service from current scope", notSelected: "Not selected"
+      },
+      NL: {
+        retailDiagnosis: "Retaildiagnose", shoppingDiagnosis: "Winkelcentrumdiagnose", retailLeakTitle: "Waar lekt performance vandaag?", shoppingLeakTitle: "Waar lekt assetwaarde vandaag?", retailLeakIntro: "Selecteer de situaties die het meest herkenbaar zijn voor je winkels. PFM vertaalt ze naar relevante performance-inzichten en vervolgstappen.", shoppingLeakIntro: "Kies de asset-, leasing-, flow-, parking-, catchment- en portfolio-uitdagingen die het meest relevant zijn.", pfmFit: "PFM fit", insightTitle: "Vertaal pains naar bruikbare inzichten", insightIntroRetail: "Dit is de praktische insight-laag: wat PFM helpt zien, verklaren en verbeteren over winkels heen.", insightIntroShopping: "Zo vertaalt PFM de gekozen uitdagingen naar asset intelligence: van bezoekersflow en catchment tot huurders-, parking- en portfolio-inzicht.", suggestedSalesStory: "Voorgesteld salesverhaal", salesStoryRetail: "PFM telt niet alleen bezoekers. We verbinden beweging, sales en context om te laten zien waar retail performance lekt — en welke actie meetbare upside creëert.", salesStoryRetailSub: "Gebruik deze pagina als brug van commerciële uitdagingen naar meetbare retail performance-verbetering.", salesStoryShopping: "PFM helpt winkelcentra van entreetellingen naar asset performance intelligence: verkeer, zones, huurders, parking, catchment, leasing en portfolio in één laag.", salesStoryShoppingSub: "Gebruik deze pagina om de waardestory scherp te krijgen: welke asset-uitdagingen tellen, welke inzichten nodig zijn en welke volgende stap de businesscase versterkt.", showInsightFit: "Toon insight fit", buildImpactModel: "Bouw impactmodel", buildValueModel: "Bouw waardemodel", selected: "Geselecteerd", select: "Selecteer", back: "Terug", next: "Verder", liveScanSummary: "Live scan summary", performanceScan: "performance scan", locations: "Locaties", weeklyFootfall: "Wekelijkse footfall", pfmRoute: "PFM route", realisticProfit: "Realistische winst", recommendedRoute: "Aanbevolen route", monthlyServiceFromScope: "Maandelijkse service uit huidige scope", notSelected: "Niet geselecteerd"
+      },
+      DE: {
+        retailDiagnosis: "Retail-Diagnose", shoppingDiagnosis: "Shopping-Center-Diagnose", retailLeakTitle: "Wo verliert die Performance heute Potenzial?", shoppingLeakTitle: "Wo verliert der Asset Value heute Potenzial?", retailLeakIntro: "Wählen Sie die Situationen aus, die für Ihre Stores am besten passen. PFM übersetzt sie in relevante Performance-Insights und nächste Schritte.", shoppingLeakIntro: "Wählen Sie die wichtigsten Asset-, Leasing-, Flow-, Parking-, Catchment- und Portfolio-Herausforderungen.", pfmFit: "PFM Fit", insightTitle: "Pains in umsetzbare Insights übersetzen", insightIntroRetail: "Das ist die praktische Insight-Ebene: was PFM über Stores hinweg sichtbar, erklärbar und verbesserbar macht.", insightIntroShopping: "So übersetzt PFM die ausgewählten Herausforderungen in Asset Intelligence: von Besucherfluss und Catchment bis Tenant-, Parking- und Portfolio-Insights.", suggestedSalesStory: "Vorgeschlagene Sales Story", salesStoryRetail: "PFM zählt nicht nur Besucher. Wir verbinden Bewegung, Sales und Kontext, um zu zeigen, wo Retail Performance verliert — und welche Aktion messbare Upside schafft.", salesStoryRetailSub: "Nutzen Sie diese Seite als Brücke von kommerziellen Herausforderungen zu messbarer Retail-Performance-Verbesserung.", salesStoryShopping: "PFM hilft Shopping-Centern, von Eingangszählung zu Asset Performance Intelligence zu kommen: Traffic, Zonen, Tenants, Parking, Catchment, Leasing und Portfolio in einer Ebene.", salesStoryShoppingSub: "Nutzen Sie diese Seite, um die Value Story abzustimmen: welche Asset-Herausforderungen zählen, welche Insights nötig sind und welcher nächste Schritt den Business Case stärkt.", showInsightFit: "Insight Fit anzeigen", buildImpactModel: "Impact-Modell bauen", buildValueModel: "Value-Modell bauen", selected: "Ausgewählt", select: "Auswählen", back: "Zurück", next: "Weiter", liveScanSummary: "Live Scan Summary", performanceScan: "Performance Scan", locations: "Standorte", weeklyFootfall: "Besucherfrequenz pro Woche", pfmRoute: "PFM Route", realisticProfit: "Realistischer Gewinn", recommendedRoute: "Empfohlene Route", monthlyServiceFromScope: "Monatlicher Service aus aktuellem Scope", notSelected: "Nicht ausgewählt"
+      },
+      FR: {
+        retailDiagnosis: "Diagnostic retail", shoppingDiagnosis: "Diagnostic centre commercial", retailLeakTitle: "Où la performance se perd-elle aujourd’hui ?", shoppingLeakTitle: "Où la valeur de l’actif se perd-elle aujourd’hui ?", retailLeakIntro: "Sélectionnez les situations les plus reconnaissables pour vos magasins. PFM les traduit en insights de performance et prochaines étapes.", shoppingLeakIntro: "Choisissez les enjeux d’actif, leasing, flux, parking, catchment et portefeuille les plus pertinents.", pfmFit: "Fit PFM", insightTitle: "Transformer les pains en insights actionnables", insightIntroRetail: "C’est la couche d’insights pratique : ce que PFM aide à voir, expliquer et améliorer dans les magasins.", insightIntroShopping: "PFM traduit les enjeux sélectionnés en approche d’asset intelligence : flux visiteurs, catchment, locataires, parking et portefeuille.", suggestedSalesStory: "Narratif commercial suggéré", salesStoryRetail: "PFM ne compte pas seulement les visiteurs. Nous connectons mouvement, ventes et contexte pour montrer où la performance retail se perd — et quelle action crée une upside mesurable.", salesStoryRetailSub: "Utilisez cette page comme pont entre les enjeux commerciaux et l’amélioration mesurable de la performance retail.", salesStoryShopping: "PFM aide les centres commerciaux à passer du comptage d’entrées à l’intelligence de performance d’actif : trafic, zones, locataires, parking, catchment, leasing et portefeuille.", salesStoryShoppingSub: "Utilisez cette page pour aligner l’histoire de valeur : quels enjeux comptent, quels insights sont nécessaires et quelle prochaine étape renforce le business case.", showInsightFit: "Afficher l’adéquation insights", buildImpactModel: "Construire le modèle d’impact", buildValueModel: "Construire le modèle de valeur", selected: "Sélectionné", select: "Sélectionner", back: "Retour", next: "Suivant", liveScanSummary: "Résumé live du scan", performanceScan: "scan de performance", locations: "Sites", weeklyFootfall: "Fréquentation hebdomadaire", pfmRoute: "Route PFM", realisticProfit: "Profit réaliste", recommendedRoute: "Route recommandée", monthlyServiceFromScope: "Service mensuel selon le scope actuel", notSelected: "Non sélectionné"
+      },
+      ES: {
+        retailDiagnosis: "Diagnóstico retail", shoppingDiagnosis: "Diagnóstico centro comercial", retailLeakTitle: "¿Dónde se pierde rendimiento hoy?", shoppingLeakTitle: "¿Dónde se pierde valor del activo hoy?", retailLeakIntro: "Selecciona las situaciones más reconocibles para tus tiendas. PFM las traducirá en insights de rendimiento y próximos pasos.", shoppingLeakIntro: "Elige los retos de activo, leasing, flujo, parking, catchment y portfolio más relevantes para tu organización.", pfmFit: "Fit PFM", insightTitle: "Convertir pains en insights accionables", insightIntroRetail: "Esta es la capa práctica de insights: lo que PFM ayuda a ver, explicar y mejorar en las tiendas.", insightIntroShopping: "Así traduce PFM los retos seleccionados en asset intelligence: desde flujo de visitantes y catchment hasta tenants, parking y portfolio.", suggestedSalesStory: "Historia comercial sugerida", salesStoryRetail: "PFM no solo cuenta visitantes. Conectamos movimiento, ventas y contexto para mostrar dónde se pierde rendimiento retail — y qué acción crea upside medible.", salesStoryRetailSub: "Usa esta página como puente entre retos comerciales y mejora medible del rendimiento retail.", salesStoryShopping: "PFM ayuda a los centros comerciales a pasar del conteo de entradas a asset performance intelligence: tráfico, zonas, tenants, parking, catchment, leasing y portfolio en una sola capa.", salesStoryShoppingSub: "Usa esta página para alinear la historia de valor: qué retos importan, qué insights se necesitan y qué siguiente paso refuerza el business case.", showInsightFit: "Mostrar fit de insights", buildImpactModel: "Crear modelo de impacto", buildValueModel: "Crear modelo de valor", selected: "Seleccionado", select: "Seleccionar", back: "Atrás", next: "Siguiente", liveScanSummary: "Resumen live del scan", performanceScan: "scan de rendimiento", locations: "Ubicaciones", weeklyFootfall: "Footfall semanal", pfmRoute: "Ruta PFM", realisticProfit: "Beneficio realista", recommendedRoute: "Ruta recomendada", monthlyServiceFromScope: "Servicio mensual del alcance actual", notSelected: "No seleccionado"
+      }
+    };
+
+    const GOAL_I18N = {
+      ES: {
+        baseline_missing: { title: "No tenemos una base de rendimiento fiable", pain: "Conocemos ventas o transacciones, pero no cuántas personas entraron realmente. Eso dificulta evaluar el rendimiento de tienda.", outcome: "Crear una base fiable de footfall, conversión y potencial de tienda en cada ubicación.", insightFit: "Base fiable de footfall y conversión", questions: ["¿Sabes cuántos visitantes necesitas para generar las ventas de hoy?", "¿Los datos son suficientemente fiables para comparar tiendas?", "¿Los equipos ven la misma verdad que head office?"] },
+        visitors_not_buying: { title: "Tenemos visitantes, pero no suficientes compradores", pain: "El tráfico es visible, pero el momento, la tienda o la razón de la fuga de conversión aún no está claro.", outcome: "Identificar qué tiendas, días y horas tienen suficientes visitantes pero pierden potencial de ventas.", insightFit: "Inteligencia de fuga de conversión", questions: ["¿Qué tiendas tienen buen tráfico pero ventas débiles?", "¿Cuándo baja la conversión?", "¿Los equipos ven qué mejorar la próxima semana?"] },
+        street_vs_store: { title: "No sabemos si el problema está en la calle o en la tienda", pain: "Cuando bajan las visitas, no está claro si la calle está más tranquila o si la tienda perdió poder de atracción.", outcome: "Separar la caída del tráfico externo de la atracción de la tienda y calcular capture rate por día, semana y campaña.", insightFit: "Inteligencia de capture rate y potencial de calle", questions: ["¿Entran menos personas porque la calle está más tranquila?", "¿El escaparate atrae suficiente tráfico?", "¿Marketing puede demostrar que aumentó las visitas?"] },
+        groups_distort_conversion: { title: "Familias y grupos hacen que la conversión parezca peor", pain: "Una tienda puede parecer débil cuando muchas visitas llegan como familias o grupos donde solo una persona compra.", outcome: "Añadir contexto de unidad de compra para que la conversación de conversión sea más justa y útil.", insightFit: "Contexto de conversión por unidad de compra", questions: ["¿El tráfico familiar penaliza la conversión del fin de semana?", "¿Mides personas o oportunidades reales de compra?", "¿Los managers pueden explicar la conversión con contexto?"] },
+        visitor_profile_unknown: { title: "No sabemos quién entra en nuestras tiendas", pain: "Footfall muestra cuántas personas entran, pero no si cambia el mix de visitantes por género, adultos, niños, familias, grupos o edad futura.", outcome: "Activar datasets de perfil de visitante para entender quién visita, cuándo cambia el mix y qué tiendas atraen la audiencia correcta.", insightFit: "Inteligencia de perfil y demografía de visitantes", questions: ["¿Sabes si entra la audiencia correcta?", "¿El mix de visitantes cambia por tienda, día o campaña?", "¿Familias y grupos cambian la oportunidad real de compra?"] },
+        stores_hard_to_compare: { title: "Las tiendas se comparan de forma injusta", pain: "Tiendas urbanas, destinos, retail parks, ubicaciones turísticas y flagships se comparan como si tuvieran las mismas condiciones.", outcome: "Crear grupos comparables y revelar bajo rendimiento real, potencial oculto y gaps de benchmark.", insightFit: "Inteligencia de benchmark de portfolio", questions: ["¿Comparas tiendas por tipo, tamaño y contexto?", "¿Qué ubicaciones merecen atención primero?", "¿Los regional managers pueden explicar diferencias de performance?"] },
+        staffing_feels_reactive: { title: "La planificación de personal se basa demasiado en intuición", pain: "Los momentos de alta afluencia se ven después, pero la capacidad de servicio debe planificarse antes de perder la oportunidad comercial.", outcome: "Ajustar staffing, foco de servicio y rutinas de tienda a la demanda real, picos, horas muertas y gaps de conversión.", insightFit: "Inteligencia de operaciones y servicio en tienda", questions: ["¿Qué horas tienen tráfico alto pero rendimiento débil?", "¿La planificación se basa en demanda real?", "¿Dónde puede mejorar el servicio sin adivinar?"] },
+        entrance_bounce: { title: "La gente entra, duda y se va", pain: "Algunos visitantes cruzan la entrada, ven fricción en layout o escaleras y se van antes de convertirse en oportunidad real.", outcome: "Medir engagement y bounce en la entrada para saber si los primeros metros crean o pierden potencial.", insightFit: "Inteligencia de engagement y bounce en entrada", questions: ["¿Los primeros metros de tienda convierten o pierden visitantes?", "¿Dónde se produce fricción al entrar?", "¿El layout ayuda a seguir comprando?"] },
+        instore_unknown: { title: "No sabemos qué pasa después de que entran", pain: "La entrada está medida, pero no qué zonas visitan, dónde se detienen o qué partes de la tienda no reciben atención.", outcome: "Entender recorrido, zonas, dwell y engagement dentro de tienda para mejorar layout y merchandising.", insightFit: "In-store journey & zone intelligence", questions: ["¿Qué zonas atraen o pierden atención?", "¿Dónde se quedan más tiempo los visitantes?", "¿Qué layout genera mejor recorrido?"] },
+        expansion_gut_feel: { title: "Las decisiones de expansión dependen demasiado de la intuición", pain: "Nuevas ubicaciones y comparaciones se evalúan con experiencia, pero sin suficiente evidencia externa de tráfico, catchment y potencial.", outcome: "Conectar footfall, tráfico externo y contexto local para valorar nuevas ubicaciones y potencial de expansión.", insightFit: "Location potential intelligence", questions: ["¿Qué ubicaciones tienen potencial real?", "¿El problema es tráfico, conversión o fit de ubicación?", "¿Puedes comparar ubicaciones antes de invertir?"] },
+        data_not_acted_on: { title: "Los datos existen, pero los equipos no actúan lo suficiente", pain: "Dashboards y datos están disponibles, pero no siempre se traducen en acciones semanales claras para tiendas y managers.", outcome: "Convertir datos en recomendaciones, prioridades y rutinas de acción para que los equipos actúen con consistencia.", insightFit: "Performance activation intelligence", questions: ["¿Los managers saben qué acción tomar esta semana?", "¿Los datos se traducen en prioridades claras?", "¿El equipo actúa sobre insights de forma consistente?"] }
+      }
+    };
+
+    function translateBase(lang, text) {
+      const value = String(text ?? "").trim().replace(/\s+/g, " ");
+      if (!value || lang === "EN") return text;
+      return (CONTENT_TRANSLATIONS[lang] && CONTENT_TRANSLATIONS[lang][value]) ||
+             (UI_TRANSLATIONS[lang] && UI_TRANSLATIONS[lang][value]) ||
+             (PAGE_I18N[lang] && Object.entries(PAGE_I18N.EN || {}).find(([, en]) => en === value) && PAGE_I18N[lang][Object.entries(PAGE_I18N.EN || {}).find(([, en]) => en === value)[0]]) ||
+             text;
+    }
+
+    function hydrateContentI18N() {
+      const goalSources = Object.assign({}, retailGoals || {}, shoppingGoals || {});
+      ["NL", "DE", "FR", "ES"].forEach(lang => {
+        GOAL_I18N[lang] = GOAL_I18N[lang] || {};
+        Object.entries(goalSources).forEach(([id, g]) => {
+          const existing = GOAL_I18N[lang][id] || {};
+          GOAL_I18N[lang][id] = Object.assign({
+            title: translateBase(lang, g.title),
+            pain: translateBase(lang, g.pain),
+            outcome: translateBase(lang, g.outcome),
+            insightFit: translateBase(lang, g.insightFit),
+            questions: (g.questions || []).map(q => translateBase(lang, q)),
+            modules: (g.modules || []).map(m => translateBase(lang, m))
+          }, existing);
+        });
+      });
+    }
+
+    hydrateContentI18N();
+
+    const PACKAGE_I18N = {
+      ES: {
+        starter: { name: "Essential", headline: "Medir lo básico con fiabilidad", promise: "Para retailers que primero necesitan una base fiable de tráfico y potencial de conversión.", contains: ["Advantage Portal", "Gestión de datos", "Footfall", "Informe de portfolio", "Gestión de sensores", "Soporte remoto", "Tasa de conversión"] },
+        performance: { name: "Professional", headline: "Entender quién visita y qué les atrae", promise: "Para retailers que quieren perfiles de visitantes, contexto de capture rate y una explicación de performance más rica.", contains: ["Essential incluido", "Opciones de edad / género / grupo", "Ocupación", "Capture rate"] },
+        intelligence: { name: "Enterprise", headline: "Analizar journeys, zonas y comportamiento en tienda", promise: "Para retailers que quieren analítica in-store, zoning, dwell, viabilidad Re-ID o reporting avanzado.", contains: ["Professional incluido", "Re-ID / dwell", "Heat mapping", "Informe de conversión con sales data"] }
+      }
+    };
+
+
+
+    const EXTRA_I18N = {
+      NL: {
+        impactKicker:"Impactmodel", impactTitlePrefix:"Compact aan de buitenkant,", impactTitleHighlight:"officiële ROI-logica binnenin", impactIntro:"De klantreis blijft eenvoudig. Onderliggend volgt dit model de vertrouwde ROI-calculator en breidt het TCO alleen uit met actieve PFM fit-modules.",
+        businessAssumptions:"Bedrijfsaannames", editableScenario:"Aanpasbaar in deze stap voor scenariotesten.", footfallWeekPerStore:"Footfall / week per winkel", currentConversionRate:"Huidige conversieratio", averageTicketValue:"Gemiddelde bonwaarde", grossMargin:"Brutomarge", expectedFootfallUpliftFromCapture:"Verwachte footfall-uplift vanuit capture", conversionUpliftThroughPFM:"Conversie-uplift via PFM", atvUplift:"ATV-uplift", realisationScenario:"Realisatiescenario", advancedScopePricing:"Geavanceerde scope- en prijsassumpties", openDaysWeek:"Open dagen / week", contractTermYears:"Contractduur / jaren", captureStoresScope:"Capture stores in scope", instorePilotStores:"In-store pilotwinkels", avgStoreSize:"Gemiddelde winkelgrootte m²",
+        roiOutput:"ROI-output", roiLogic:"Dezelfde logica als de officiële calculator.", paybackTime:"Terugverdientijd", paybackNote:"Gebaseerd op realistische winst na maandelijkse service.", revenueBaselineYear:"Omzetbaseline / jaar", totalCapex:"Totale CAPEX", monthlyService:"Maandelijkse service", tcoOver:"TCO over", years:"jaar", realisticExtraProfitYear:"Realistische extra winst / jaar", roiOverHorizon:"ROI over looptijd", monthsAbbrev:"mnd.", perMonth:"/ mnd.", notAvailable:"n.v.t.",
+        routeTitlePrefix:"Jouw voorgestelde", routeTitleHighlight:"PFM Intelligence-route", routeIntro:"De route wordt automatisch gekozen op basis van de gekozen behoeften. De maandelijkse service hieronder komt uit de huidige Impact Model-scope, niet uit een vaste pakketprijs.", whyThisRoute:"Waarom deze route?", routeRefine:"De route kan nog worden verfijnd na een technische en commerciële review.", chooseRoute:"Kies route", viewSummary:"Bekijk samenvatting", startNewScan:"Nieuwe scan starten", back:"Terug", next:"Verder",
+        summaryTitlePrefix:"Jouw", summaryTitleHighlight:"retail performance opportunity", summaryIntro:"Deze samenvatting bevat de geselecteerde uitdagingen, de passende PFM insight fit en de indicatieve commerciële impact. Ze is bedoeld als gespreksstarter en kan na de sessie worden verfijnd tot een voorstel op maat.", suggestedNextStep:"Voorgestelde volgende stap", validateAssumptions:"Valideer de aannames en bepaal de juiste scope.", summaryNextCopy:"PFM kan deze scan gebruiken als startpunt voor een performancevoorstel op maat, inclusief datalagen, solution scope en commerciële route.",
+        shoppingValueModel:"Waardemodel winkelcentrum", shoppingValueTitlePrefix:"Van tellingen naar", shoppingValueTitleHighlight:"asset intelligence", shoppingValueIntro:"Waarde voor winkelcentra wordt niet berekend als retail-conversie-ROI. Het model start met de gekozen asset pains en vertaalt die naar benodigde datalagen, rapportagemodules en feasibility checks.", shoppingNotice:"Volgende stap: pricing en pakketten voor Shopping Centre moeten apart van Retail Chain worden bepaald. Er wordt hier nog geen kunstmatige ROI-claim getoond.", active:"Actief",
+        shoppingRouteTitlePrefix:"Kies de", shoppingRouteTitleHighlight:"asset intelligence-route", shoppingRouteIntro:"De geselecteerde uitdagingen bepalen welke value route het meest relevant is voor het gesprek.", shoppingRouteNotice:"Deze route is indicatief en kan worden verfijnd na technische en commerciële review.",
+        routeReasonBase:"De geselecteerde scope focust op betrouwbare footfall- en conversiebaseline: Essential.", routeReasonDemo:"Visitor profile inzichten zoals leeftijd, gender, groepen of volwassenen/kinderen verplaatsen de scope naar Professional.", routeReasonCapture:"Capture-rate of street-potential insight verplaatst de scope naar Professional.", routeReasonInstore:"In-store analytics, zoning of journey insights vragen om de Enterprise-route.", routeReasonShopping:"Gebaseerd op de geselecteerde asset intelligence needs.",
+        entrancePerformanceLayer:"Entrance Performance Layer", captureRateLayer:"Street Potential / Capture Rate Layer", instoreJourneyLayer:"In-store Journey Layer", visitorProfileAddons:"Visitor Profile Dataset Add-ons", scope:"Scope", units:"Units", tco:"TCO"
+      },
+      DE: {
+        impactKicker:"Impact-Modell", impactTitlePrefix:"Außen kompakt,", impactTitleHighlight:"innen offizielle ROI-Logik", impactIntro:"Die Customer Journey bleibt einfach. Im Hintergrund folgt dies der bewährten ROI-Rechnerlogik und erweitert TCO nur um aktive PFM-Fit-Module.",
+        businessAssumptions:"Business-Annahmen", editableScenario:"In diesem Schritt für Szenariotests anpassbar.", footfallWeekPerStore:"Footfall / Woche je Filiale", currentConversionRate:"Aktuelle Conversion Rate", averageTicketValue:"Durchschnittlicher Bonwert", grossMargin:"Bruttomarge", expectedFootfallUpliftFromCapture:"Erwarteter Footfall-Uplift durch Capture", conversionUpliftThroughPFM:"Conversion-Uplift durch PFM", atvUplift:"ATV-Uplift", realisationScenario:"Realisierungsszenario", advancedScopePricing:"Erweiterte Scope- und Pricing-Annahmen", openDaysWeek:"Öffnungstage / Woche", contractTermYears:"Vertragslaufzeit / Jahre", captureStoresScope:"Capture-Stores im Scope", instorePilotStores:"In-store Pilotfilialen", avgStoreSize:"Durchschnittliche Filialgröße m²",
+        roiOutput:"ROI-Output", roiLogic:"Gleiche Logik wie der offizielle Rechner.", paybackTime:"Payback-Zeit", paybackNote:"Basierend auf realistischem Gewinn nach monatlichem Service.", revenueBaselineYear:"Umsatz-Baseline / Jahr", totalCapex:"Gesamte CAPEX", monthlyService:"Monatlicher Service", tcoOver:"TCO über", years:"Jahre", realisticExtraProfitYear:"Realistischer Zusatzgewinn / Jahr", roiOverHorizon:"ROI über Laufzeit", monthsAbbrev:"Mon.", perMonth:"/ Mon.", notAvailable:"n/a",
+        routeTitlePrefix:"Ihre vorgeschlagene", routeTitleHighlight:"PFM Intelligence Route", routeIntro:"Die Route wird automatisch aus den gewählten Bedürfnissen abgeleitet. Der monatliche Service unten kommt aus dem aktuellen Impact-Model-Scope, nicht aus einem festen Paketpreis.", whyThisRoute:"Warum diese Route?", routeRefine:"Die Route kann nach einer technischen und kommerziellen Prüfung noch verfeinert werden.", chooseRoute:"Route wählen", viewSummary:"Zusammenfassung anzeigen", startNewScan:"Neuen Scan starten", back:"Zurück", next:"Weiter",
+        summaryTitlePrefix:"Ihre", summaryTitleHighlight:"Retail-Performance-Chance", summaryIntro:"Diese Zusammenfassung enthält die ausgewählten Herausforderungen, den passenden PFM Insight Fit und die indikative kommerzielle Wirkung. Sie dient als Gesprächsstarter und kann nach der Session zu einem maßgeschneiderten Angebot verfeinert werden.", suggestedNextStep:"Vorgeschlagener nächster Schritt", validateAssumptions:"Annahmen validieren und den richtigen Scope definieren.", summaryNextCopy:"PFM kann diesen Scan als Ausgangspunkt für ein maßgeschneidertes Performance-Angebot nutzen, inklusive Datenebenen, Solution Scope und kommerzieller Route.",
+        shoppingValueModel:"Shopping-Center Value Model", shoppingValueTitlePrefix:"Von Zählungen zu", shoppingValueTitleHighlight:"Asset Intelligence", shoppingValueIntro:"Shopping-Center-Wert wird nicht wie Retail-Conversion-ROI berechnet. Das Modell startet mit den gewählten Asset Pains und übersetzt sie in benötigte Datenebenen, Reporting-Module und Feasibility Checks.", shoppingNotice:"Nächster Schritt: Pricing und Pakete für Shopping Centre sollten separat von Retail Chain definiert werden. Hier wird noch kein künstlicher ROI-Claim gezeigt.", active:"Aktiv",
+        shoppingRouteTitlePrefix:"Wählen Sie die", shoppingRouteTitleHighlight:"Asset-Intelligence-Route", shoppingRouteIntro:"Die ausgewählten Herausforderungen bestimmen, welche Value Route für das Gespräch am relevantesten ist.", shoppingRouteNotice:"Diese Route ist indikativ und kann nach einer technischen und kommerziellen Prüfung verfeinert werden.",
+        routeReasonBase:"Der gewählte Scope fokussiert auf eine verlässliche Footfall- und Conversion-Baseline: Essential.", routeReasonDemo:"Visitor-Profile-Insights wie Alter, Gender, Gruppen oder Erwachsene/Kinder verschieben den Scope zu Professional.", routeReasonCapture:"Capture-Rate oder Street-Potential-Insight verschiebt den Scope zu Professional.", routeReasonInstore:"In-store Analytics, Zoning oder Journey Insights erfordern die Enterprise-Route.", routeReasonShopping:"Basierend auf den ausgewählten Asset-Intelligence-Bedürfnissen.",
+        entrancePerformanceLayer:"Entrance Performance Layer", captureRateLayer:"Street Potential / Capture Rate Layer", instoreJourneyLayer:"In-store Journey Layer", visitorProfileAddons:"Visitor Profile Dataset Add-ons", scope:"Scope", units:"Einheiten", tco:"TCO"
+      },
+      FR: {
+        impactKicker:"Modèle d’impact", impactTitlePrefix:"Simple côté client,", impactTitleHighlight:"logique ROI officielle en arrière-plan", impactIntro:"Le parcours reste simple. En arrière-plan, le modèle suit la logique du calculateur ROI et n’ajoute au TCO que les modules PFM fit actifs.",
+        businessAssumptions:"Hypothèses business", editableScenario:"Modifiable à cette étape pour tester des scénarios.", footfallWeekPerStore:"Fréquentation / semaine par magasin", currentConversionRate:"Taux de conversion actuel", averageTicketValue:"Panier moyen", grossMargin:"Marge brute", expectedFootfallUpliftFromCapture:"Uplift de fréquentation attendu via capture", conversionUpliftThroughPFM:"Uplift de conversion via PFM", atvUplift:"Uplift panier moyen", realisationScenario:"Scénario de réalisation", advancedScopePricing:"Hypothèses avancées de scope et pricing", openDaysWeek:"Jours d’ouverture / semaine", contractTermYears:"Durée du contrat / années", captureStoresScope:"Magasins capture dans le scope", instorePilotStores:"Magasins pilotes in-store", avgStoreSize:"Surface moyenne magasin m²",
+        roiOutput:"Sortie ROI", roiLogic:"Même logique que le calculateur officiel.", paybackTime:"Délai de retour", paybackNote:"Basé sur le profit réaliste après service mensuel.", revenueBaselineYear:"Chiffre d’affaires baseline / an", totalCapex:"CAPEX total", monthlyService:"Service mensuel", tcoOver:"TCO sur", years:"ans", realisticExtraProfitYear:"Profit réaliste supplémentaire / an", roiOverHorizon:"ROI sur horizon", monthsAbbrev:"mois", perMonth:"/ mois", notAvailable:"n/a",
+        routeTitlePrefix:"Votre", routeTitleHighlight:"route PFM Intelligence suggérée", routeIntro:"La route est sélectionnée automatiquement selon les besoins choisis. Le service mensuel ci-dessous vient du scope actuel du modèle d’impact, pas d’un prix package fixe.", whyThisRoute:"Pourquoi cette route ?", routeRefine:"La route peut encore être affinée après une revue technique et commerciale.", chooseRoute:"Choisir la route", viewSummary:"Voir le résumé", startNewScan:"Nouveau scan", back:"Retour", next:"Suivant",
+        summaryTitlePrefix:"Votre", summaryTitleHighlight:"opportunité de performance retail", summaryIntro:"Ce résumé reprend les défis sélectionnés, le PFM insight fit correspondant et l’impact commercial indicatif. Il sert de point de départ à la discussion et peut être affiné en proposition sur mesure après la session.", suggestedNextStep:"Prochaine étape suggérée", validateAssumptions:"Valider les hypothèses et définir le bon scope.", summaryNextCopy:"PFM peut utiliser ce scan comme point de départ pour une proposition de performance sur mesure, incluant les couches de données, le scope solution et la route commerciale.",
+        shoppingValueModel:"Modèle de valeur Shopping Centre", shoppingValueTitlePrefix:"Des comptages à", shoppingValueTitleHighlight:"l’asset intelligence", shoppingValueIntro:"La valeur d’un shopping centre ne se calcule pas comme un ROI de conversion retail. Le modèle part des pains asset sélectionnés et les traduit en couches de données, modules de reporting et contrôles de faisabilité.", shoppingNotice:"Prochaine étape : pricing et packages Shopping Centre doivent être définis séparément du Retail Chain. Aucun faux claim ROI n’est affiché ici.", active:"Actif",
+        shoppingRouteTitlePrefix:"Choisir la", shoppingRouteTitleHighlight:"route asset intelligence", shoppingRouteIntro:"Les défis sélectionnés déterminent quelle route de valeur est la plus pertinente pour la conversation.", shoppingRouteNotice:"Cette route est indicative et peut être affinée après une revue technique et commerciale.",
+        routeReasonBase:"Le scope sélectionné se concentre sur une baseline fiable de fréquentation et conversion : Essential.", routeReasonDemo:"Les insights profil visiteur comme âge, genre, groupes ou adultes/enfants font passer le scope à Professional.", routeReasonCapture:"Les insights capture rate ou potentiel rue font passer le scope à Professional.", routeReasonInstore:"L’in-store analytics, le zoning ou les journey insights nécessitent la route Enterprise.", routeReasonShopping:"Basé sur les besoins d’asset intelligence sélectionnés.",
+        entrancePerformanceLayer:"Entrance Performance Layer", captureRateLayer:"Street Potential / Capture Rate Layer", instoreJourneyLayer:"In-store Journey Layer", visitorProfileAddons:"Visitor Profile Dataset Add-ons", scope:"Scope", units:"Unités", tco:"TCO"
+      },
+      ES: {
+        impactKicker:"Modelo de impacto", impactTitlePrefix:"Simple por fuera,", impactTitleHighlight:"lógica ROI oficial por dentro", impactIntro:"El recorrido de compra se mantiene simple. Por debajo, sigue la lógica del calculador ROI y solo amplía el TCO con los módulos PFM fit activos.",
+        businessAssumptions:"Supuestos de negocio", editableScenario:"Editable en este paso para probar escenarios.", footfallWeekPerStore:"Footfall / semana por tienda", currentConversionRate:"Tasa de conversión actual", averageTicketValue:"Ticket medio", grossMargin:"Margen bruto", expectedFootfallUpliftFromCapture:"Uplift de footfall esperado por capture", conversionUpliftThroughPFM:"Uplift de conversión vía PFM", atvUplift:"Uplift de ticket medio", realisationScenario:"Escenario de realización", advancedScopePricing:"Supuestos avanzados de alcance y precio", openDaysWeek:"Días abiertos / semana", contractTermYears:"Duración contrato / años", captureStoresScope:"Tiendas capture en alcance", instorePilotStores:"Tiendas piloto in-store", avgStoreSize:"Tamaño medio de tienda m²",
+        roiOutput:"Resultado ROI", roiLogic:"Misma lógica que el calculador oficial.", paybackTime:"Tiempo de payback", paybackNote:"Basado en beneficio realista después del servicio mensual.", revenueBaselineYear:"Baseline de ingresos / año", totalCapex:"CAPEX total", monthlyService:"Servicio mensual", tcoOver:"TCO en", years:"años", realisticExtraProfitYear:"Beneficio extra realista / año", roiOverHorizon:"ROI en horizonte", monthsAbbrev:"meses", perMonth:"/ mes", notAvailable:"n/a",
+        routeTitlePrefix:"Tu", routeTitleHighlight:"ruta PFM Intelligence sugerida", routeIntro:"La ruta se selecciona automáticamente según las necesidades elegidas. El servicio mensual mostrado abajo viene del alcance actual del Modelo de Impacto, no de un precio fijo de paquete.", whyThisRoute:"¿Por qué esta ruta?", routeRefine:"La ruta aún puede afinarse después de una revisión técnica y comercial.", chooseRoute:"Elegir ruta", viewSummary:"Ver resumen", startNewScan:"Nuevo scan", back:"Atrás", next:"Siguiente",
+        summaryTitlePrefix:"Tu", summaryTitleHighlight:"oportunidad de rendimiento retail", summaryIntro:"Este resumen recoge los retos seleccionados, el PFM insight fit correspondiente y el impacto comercial indicativo. Sirve como punto de partida para la conversación y puede afinarse en una propuesta a medida después de la sesión.", suggestedNextStep:"Siguiente paso sugerido", validateAssumptions:"Validar los supuestos y definir el alcance correcto.", summaryNextCopy:"PFM puede usar este scan como punto de partida para una propuesta de rendimiento a medida, incluyendo capas de datos, alcance de solución y ruta comercial.",
+        shoppingValueModel:"Modelo de valor Shopping Centre", shoppingValueTitlePrefix:"De conteos a", shoppingValueTitleHighlight:"asset intelligence", shoppingValueIntro:"El valor de un shopping centre no se calcula como ROI de conversión retail. El modelo empieza con los pains de asset elegidos y los convierte en capas de datos, módulos de reporting y checks de viabilidad.", shoppingNotice:"Siguiente paso: pricing y paquetes para Shopping Centre deben definirse aparte de Retail Chain. Aquí no se muestra una claim ROI artificial.", active:"Activo",
+        shoppingRouteTitlePrefix:"Elige la", shoppingRouteTitleHighlight:"ruta de asset intelligence", shoppingRouteIntro:"Los retos seleccionados determinan qué ruta de valor es más relevante para la conversación.", shoppingRouteNotice:"Esta ruta es indicativa y puede afinarse después de una revisión técnica y comercial.",
+        routeReasonBase:"El alcance seleccionado se centra en una baseline fiable de footfall y conversión: Essential.", routeReasonDemo:"Los insights de perfil de visitante como edad, género, grupos o adultos/niños llevan el alcance a Professional.", routeReasonCapture:"Capture-rate o street-potential insight llevan el alcance a Professional.", routeReasonInstore:"In-store analytics, zoning o journey insights requieren la ruta Enterprise.", routeReasonShopping:"Basado en las necesidades de asset intelligence seleccionadas.",
+        entrancePerformanceLayer:"Entrance Performance Layer", captureRateLayer:"Street Potential / Capture Rate Layer", instoreJourneyLayer:"In-store Journey Layer", visitorProfileAddons:"Visitor Profile Dataset Add-ons", scope:"Alcance", units:"Unidades", tco:"TCO"
+      },
+      EN: {
+        impactKicker:"Impact model", impactTitlePrefix:"Compact outside,", impactTitleHighlight:"official ROI logic inside", impactIntro:"The buying journey stays simple. Under the hood this follows the trusted ROI calculator logic and only extends TCO with active PFM fit modules.", businessAssumptions:"Bedrijfsaannames", editableScenario:"Editable in this step for scenario testing.", footfallWeekPerStore:"Footfall / week per store", currentConversionRate:"Current conversion rate", averageTicketValue:"Average ticket value", grossMargin:"Gross margin", expectedFootfallUpliftFromCapture:"Expected footfall uplift from capture", conversionUpliftThroughPFM:"Conversion uplift through PFM", atvUplift:"ATV uplift", realisationScenario:"Realisation scenario", advancedScopePricing:"Advanced scope & pricing assumptions", openDaysWeek:"Open days / week", contractTermYears:"Contract term / years", captureStoresScope:"Capture stores in scope", instorePilotStores:"In-store pilot stores", avgStoreSize:"Average store size m²", roiOutput:"ROI output", roiLogic:"Same logic as the official calculator.", paybackTime:"Payback time", paybackNote:"Based on realistic profit after monthly service.", revenueBaselineYear:"Revenue baseline / year", totalCapex:"Total CAPEX", monthlyService:"Monthly service", tcoOver:"TCO over", years:"years", realisticExtraProfitYear:"Realistic extra profit / year", roiOverHorizon:"ROI over horizon", monthsAbbrev:"mo.", perMonth:"/ mo.", notAvailable:"n/a", routeTitlePrefix:"Your suggested", routeTitleHighlight:"PFM Intelligence route", routeIntro:"The route is selected automatically from the needs you chose. The monthly service shown below comes from the current Impact Model scope, not from a fixed package price.", whyThisRoute:"Why this route?", routeRefine:"The route can still be refined after a technical and commercial review.", chooseRoute:"Choose route", viewSummary:"View summary", startNewScan:"Start new scan", back:"Back", next:"Next", summaryTitlePrefix:"Your", summaryTitleHighlight:"retail performance opportunity", summaryIntro:"This summary captures the selected challenges, the matching PFM insight fit and the indicative commercial impact. It is intended as a conversation starter and can be refined into a tailored proposal after the session.", suggestedNextStep:"Suggested next step", validateAssumptions:"Validate the assumptions and define the right scope.", summaryNextCopy:"PFM can use this scan as a starting point for a tailored performance proposal, including the required data layers, solution scope and commercial route.", shoppingValueModel:"Shopping centre value model", shoppingValueTitlePrefix:"From counts to", shoppingValueTitleHighlight:"asset intelligence", shoppingValueIntro:"Shopping centre value is not calculated like retail conversion ROI. The model starts with the chosen asset pains and turns them into the required data layers, reporting modules and feasibility checks.", shoppingNotice:"Next step: pricing and packages for Shopping Centre should be defined separately from Retail Chain. No fake ROI claim is shown here yet.", active:"Active", shoppingRouteTitlePrefix:"Choose the", shoppingRouteTitleHighlight:"asset intelligence route", shoppingRouteIntro:"The selected challenges determine which value route is most relevant for the conversation.", shoppingRouteNotice:"This route is indicative and can be refined after a technical and commercial review.", routeReasonBase:"The selected scope focuses on trusted footfall and conversion baseline: Essential.", routeReasonDemo:"Visitor profile insights such as age, gender, groups or adults/kids move the scope to Professional.", routeReasonCapture:"Capture-rate or street-potential insight moves the scope to Professional.", routeReasonInstore:"In-store analytics, zoning or journey insights require the Enterprise route.", routeReasonShopping:"Based on the selected asset intelligence needs.", entrancePerformanceLayer:"Entrance Performance Layer", captureRateLayer:"Street Potential / Capture Rate Layer", instoreJourneyLayer:"In-store Journey Layer", visitorProfileAddons:"Visitor Profile Dataset Add-ons", scope:"Scope", units:"Units", tco:"TCO"
+      }
+    };
+    Object.keys(EXTRA_I18N).forEach(lang => {
+      PAGE_I18N[lang] = Object.assign({}, PAGE_I18N.EN || {}, PAGE_I18N[lang] || {}, EXTRA_I18N[lang]);
+    });
+
+    const SHOPPING_ROUTE_I18N = {
+      EN: [
+        { id:"starter", name:"Foundation", headline:"Trusted centre baseline", promise:"For centres that first need reliable entrance counts, trend proof and benchmark reporting.", tags:["Entrance counting","Data validation","Benchmark report"] },
+        { id:"performance", name:"Asset Intelligence", headline:"Flow, tenant and catchment insight", promise:"For teams that need to connect entrances, zones, tenant capture, geo-app data and leasing evidence.", tags:["Zone flow","Tenant capture","Smart data","Brand affinity"] },
+        { id:"intelligence", name:"Portfolio Intelligence", headline:"Asset health and portfolio control", promise:"For owners that want LVI, portfolio ranking, forecasting, executive reporting and advanced data layers.", tags:["LVI","Portfolio dashboard","Forecasting","Executive view"] }
+      ],
+      NL: [
+        { id:"starter", name:"Foundation", headline:"Betrouwbare centre baseline", promise:"Voor centra die eerst betrouwbare entreeaantallen, trendbewijs en benchmarkrapportage nodig hebben.", tags:["Entreetelling","Datavalidatie","Benchmarkrapport"] },
+        { id:"performance", name:"Asset Intelligence", headline:"Flow-, tenant- en catchment-inzicht", promise:"Voor teams die entrees, zones, tenant capture, geo-app data en leasing evidence willen verbinden.", tags:["Zone flow","Tenant capture","Smart data","Brand affinity"] },
+        { id:"intelligence", name:"Portfolio Intelligence", headline:"Asset health en portfoliocontrole", promise:"Voor eigenaren die LVI, portfolioranking, forecasting, executive reporting en advanced data layers willen.", tags:["LVI","Portfoliodashboard","Forecasting","Executive view"] }
+      ],
+      DE: [
+        { id:"starter", name:"Foundation", headline:"Verlässliche Center-Baseline", promise:"Für Center, die zuerst verlässliche Eingangszahlen, Trendnachweis und Benchmark-Reporting brauchen.", tags:["Eingangszählung","Datenvalidierung","Benchmark-Report"] },
+        { id:"performance", name:"Asset Intelligence", headline:"Flow-, Tenant- und Catchment-Insight", promise:"Für Teams, die Eingänge, Zonen, Tenant Capture, Geo-App-Daten und Leasing Evidence verbinden wollen.", tags:["Zone Flow","Tenant Capture","Smart Data","Brand Affinity"] },
+        { id:"intelligence", name:"Portfolio Intelligence", headline:"Asset Health und Portfolio Control", promise:"Für Eigentümer, die LVI, Portfolio Ranking, Forecasting, Executive Reporting und erweiterte Datenebenen möchten.", tags:["LVI","Portfolio-Dashboard","Forecasting","Executive View"] }
+      ],
+      FR: [
+        { id:"starter", name:"Foundation", headline:"Baseline centre fiable", promise:"Pour les centres qui ont d’abord besoin de comptages d’entrées fiables, de preuves de tendance et de benchmarking.", tags:["Comptage entrées","Validation données","Rapport benchmark"] },
+        { id:"performance", name:"Asset Intelligence", headline:"Insights flow, tenants et catchment", promise:"Pour les équipes qui veulent connecter entrées, zones, tenant capture, geo-app data et preuves leasing.", tags:["Zone flow","Tenant capture","Smart data","Brand affinity"] },
+        { id:"intelligence", name:"Portfolio Intelligence", headline:"Asset health et contrôle portfolio", promise:"Pour les propriétaires qui veulent LVI, ranking portfolio, forecasting, executive reporting et couches de données avancées.", tags:["LVI","Dashboard portfolio","Forecasting","Executive view"] }
+      ],
+      ES: [
+        { id:"starter", name:"Foundation", headline:"Baseline fiable del centro", promise:"Para centros que primero necesitan conteos fiables de entradas, prueba de tendencia y reporting benchmark.", tags:["Conteo de entradas","Validación de datos","Informe benchmark"] },
+        { id:"performance", name:"Asset Intelligence", headline:"Insight de flow, tenants y catchment", promise:"Para equipos que quieren conectar entradas, zonas, tenant capture, geo-app data y evidencia de leasing.", tags:["Zone flow","Tenant capture","Smart data","Brand affinity"] },
+        { id:"intelligence", name:"Portfolio Intelligence", headline:"Asset health y control de portfolio", promise:"Para propietarios que quieren LVI, ranking de portfolio, forecasting, executive reporting y capas de datos avanzadas.", tags:["LVI","Dashboard portfolio","Forecasting","Executive view"] }
+      ]
+    };
+
+
+    Object.assign(PAGE_I18N.EN, { conversationSummary:"Conversation summary", potentialPayback:"Potential payback", indicativeExtraProfitYear:"Indicative extra profit / year", storesInScope:"Stores in scope", selected:"Selected", notSelected:"Not selected", monthlyServiceFromScope:"Monthly service from current scope", recommendedRoute:"Recommended route" });
+    Object.assign(PAGE_I18N.NL, { conversationSummary:"Gesprekssamenvatting", potentialPayback:"Potentiële terugverdientijd", indicativeExtraProfitYear:"Indicatieve extra winst / jaar", storesInScope:"Winkels in scope", selected:"Geselecteerd", notSelected:"Niet geselecteerd", monthlyServiceFromScope:"Maandelijkse service uit huidige scope", recommendedRoute:"Aanbevolen route" });
+    Object.assign(PAGE_I18N.DE, { conversationSummary:"Gesprächszusammenfassung", potentialPayback:"Potenzieller Payback", indicativeExtraProfitYear:"Indikativer Zusatzgewinn / Jahr", storesInScope:"Filialen im Scope", selected:"Ausgewählt", notSelected:"Nicht ausgewählt", monthlyServiceFromScope:"Monatlicher Service aus aktuellem Scope", recommendedRoute:"Empfohlene Route" });
+    Object.assign(PAGE_I18N.FR, { conversationSummary:"Résumé de conversation", potentialPayback:"Retour sur investissement potentiel", indicativeExtraProfitYear:"Profit supplémentaire indicatif / an", storesInScope:"Magasins dans le scope", selected:"Sélectionné", notSelected:"Non sélectionné", monthlyServiceFromScope:"Service mensuel du scope actuel", recommendedRoute:"Route recommandée" });
+    Object.assign(PAGE_I18N.ES, { conversationSummary:"Resumen de conversación", potentialPayback:"Payback potencial", indicativeExtraProfitYear:"Beneficio extra indicativo / año", storesInScope:"Tiendas en alcance", selected:"Seleccionado", notSelected:"No seleccionado", monthlyServiceFromScope:"Servicio mensual del alcance actual", recommendedRoute:"Ruta recomendada" });
+
+
+    Object.assign(PAGE_I18N.EN, { entrancePerformanceNote:"Premium entrance performance layer.", captureRateNote:"Adds passer-by / street traffic measurement for capture-rate insight.", instoreJourneyNote:"Indicative in-store analytics scope for zone, journey and layout insights.", visitorProfileNote:"Activated visitor profile datasets. Indicative add-on pricing included." });
+    Object.assign(PAGE_I18N.NL, { entrancePerformanceNote:"Premium entrance performance layer.", captureRateNote:"Voegt passanten-/straattrafficmeting toe voor capture-rate inzicht.", instoreJourneyNote:"Indicatieve in-store analytics scope voor zone-, journey- en layout-inzichten.", visitorProfileNote:"Geactiveerde visitor profile datasets. Indicatieve add-on pricing inbegrepen." });
+    Object.assign(PAGE_I18N.DE, { entrancePerformanceNote:"Premium Entrance Performance Layer.", captureRateNote:"Ergänzt Passanten-/Straßentraffic-Messung für Capture-Rate-Insight.", instoreJourneyNote:"Indikativer In-store-Analytics-Scope für Zone-, Journey- und Layout-Insights.", visitorProfileNote:"Aktivierte Visitor-Profile-Datasets. Indikatives Add-on-Pricing enthalten." });
+    Object.assign(PAGE_I18N.FR, { entrancePerformanceNote:"Couche premium d’entrance performance.", captureRateNote:"Ajoute la mesure du trafic passant / rue pour l’insight capture rate.", instoreJourneyNote:"Scope in-store analytics indicatif pour zones, journeys et layout.", visitorProfileNote:"Datasets profil visiteur activés. Pricing add-on indicatif inclus." });
+    Object.assign(PAGE_I18N.ES, { entrancePerformanceNote:"Capa premium de entrance performance.", captureRateNote:"Añade medición de tráfico exterior / calle para insight de capture rate.", instoreJourneyNote:"Alcance indicativo de in-store analytics para zonas, journeys y layout.", visitorProfileNote:"Datasets de perfil de visitante activados. Pricing add-on indicativo incluido." });
+
+    const SHOPPING_MODULE_TRANSLATIONS = {
+      NL: {"Sensor-based foundation":"Sensor-based foundation", "3D entrance, zone, facility and tenant counting where accurate and validated counts are required.":"3D-entree-, zone-, facility- en tenant-telling waar accurate en gevalideerde tellingen nodig zijn.", "Smart data / geo-app layer":"Smart data / geo-app layer", "Catchment, competitor overlap, brand affinity, visitor frequency and household profile. This is a data service, not extra sensor hardware.":"Catchment, competitor overlap, brand affinity, bezoekfrequentie en household profile. Dit is een dataservice, geen extra sensorhardware.", "ANPR / mobility layer":"ANPR / mobility layer", "Car counts, vehicle dwell, parking occupancy, origin country/region and mobility pressure for retail parks or car-led centres.":"Autotellingen, vehicle dwell, parkeerbezetting, herkomstland/regio en mobility pressure voor retail parks of auto-gedreven centra.", "Portfolio / BI layer":"Portfolio / BI layer", "Executive dashboards, benchmarking, LVI/asset health, forecasting and portfolio ranking.":"Executive dashboards, benchmarking, LVI/asset health, forecasting en portfolioranking."},
+      DE: {"Sensor-based foundation":"Sensorbasierte Grundlage", "3D entrance, zone, facility and tenant counting where accurate and validated counts are required.":"3D-Eingangs-, Zonen-, Facility- und Tenant-Zählung, wo genaue und validierte Counts benötigt werden.", "Smart data / geo-app layer":"Smart-Data-/Geo-App-Ebene", "Catchment, competitor overlap, brand affinity, visitor frequency and household profile. This is a data service, not extra sensor hardware.":"Catchment, Competitor Overlap, Brand Affinity, Besuchsfrequenz und Household Profile. Dies ist ein Datendienst, keine zusätzliche Sensorhardware.", "ANPR / mobility layer":"ANPR-/Mobility-Ebene", "Car counts, vehicle dwell, parking occupancy, origin country/region and mobility pressure for retail parks or car-led centres.":"Fahrzeugzählungen, Vehicle Dwell, Parkauslastung, Herkunftsland/-region und Mobility Pressure für Retail Parks oder autoorientierte Center.", "Portfolio / BI layer":"Portfolio-/BI-Ebene", "Executive dashboards, benchmarking, LVI/asset health, forecasting and portfolio ranking.":"Executive Dashboards, Benchmarking, LVI/Asset Health, Forecasting und Portfolio Ranking."},
+      FR: {"Sensor-based foundation":"Fondation basée sur capteurs", "3D entrance, zone, facility and tenant counting where accurate and validated counts are required.":"Comptage 3D des entrées, zones, facilities et tenants lorsque des comptages précis et validés sont nécessaires.", "Smart data / geo-app layer":"Couche smart data / geo-app", "Catchment, competitor overlap, brand affinity, visitor frequency and household profile. This is a data service, not extra sensor hardware.":"Catchment, overlap concurrentiel, brand affinity, fréquence de visite et profils ménages. C’est un service data, pas du hardware capteur supplémentaire.", "ANPR / mobility layer":"Couche ANPR / mobilité", "Car counts, vehicle dwell, parking occupancy, origin country/region and mobility pressure for retail parks or car-led centres.":"Comptage voitures, vehicle dwell, occupation parking, pays/région d’origine et pression mobilité pour retail parks ou centres orientés voiture.", "Portfolio / BI layer":"Couche portfolio / BI", "Executive dashboards, benchmarking, LVI/asset health, forecasting and portfolio ranking.":"Dashboards exécutifs, benchmarking, LVI/asset health, forecasting et ranking portfolio."},
+      ES: {"Sensor-based foundation":"Base basada en sensores", "3D entrance, zone, facility and tenant counting where accurate and validated counts are required.":"Conteo 3D de entradas, zonas, facilities y tenants cuando se requieren conteos precisos y validados.", "Smart data / geo-app layer":"Capa smart data / geo-app", "Catchment, competitor overlap, brand affinity, visitor frequency and household profile. This is a data service, not extra sensor hardware.":"Catchment, solapamiento con competidores, brand affinity, frecuencia de visita y perfiles de hogar. Es un servicio de datos, no hardware sensor adicional.", "ANPR / mobility layer":"Capa ANPR / movilidad", "Car counts, vehicle dwell, parking occupancy, origin country/region and mobility pressure for retail parks or car-led centres.":"Conteo de coches, vehicle dwell, ocupación de parking, país/región de origen y presión de movilidad para retail parks o centros dependientes del coche.", "Portfolio / BI layer":"Capa portfolio / BI", "Executive dashboards, benchmarking, LVI/asset health, forecasting and portfolio ranking.":"Dashboards ejecutivos, benchmarking, LVI/asset health, forecasting y ranking de portfolio."}
+    };
+    Object.keys(SHOPPING_MODULE_TRANSLATIONS).forEach(lang => Object.assign(CONTENT_TRANSLATIONS[lang] || (CONTENT_TRANSLATIONS[lang] = {}), SHOPPING_MODULE_TRANSLATIONS[lang]));
+
+    function componentText(c, field) {
+      const map = {
+        entrance_performance: { label: TX("entrancePerformanceLayer"), note: TX("entrancePerformanceNote") },
+        capture_rate: { label: TX("captureRateLayer"), note: TX("captureRateNote") },
+        instore_journey: { label: TX("instoreJourneyLayer"), note: TX("instoreJourneyNote") },
+        visitor_profile_addons: { label: TX("visitorProfileAddons"), note: TX("visitorProfileNote") }
+      };
+      return (map[c.component_key] && map[c.component_key][field]) || TR(c[field === "label" ? "component_label" : "quote_note"] || "");
+    }
+
+    function TX(key) { return (PAGE_I18N[state.lang] && PAGE_I18N[state.lang][key]) || PAGE_I18N.EN[key] || (CONTENT_TRANSLATIONS[state.lang] && CONTENT_TRANSLATIONS[state.lang][key]) || (UI_TRANSLATIONS[state.lang] && UI_TRANSLATIONS[state.lang][key]) || key; }
+    function goalText(g, field) { const m = GOAL_I18N[state.lang] && GOAL_I18N[state.lang][g && g._id]; return (m && m[field]) || TR(g && g[field] ? g[field] : ""); }
+    function goalQuestion(g, q, idx = 0) { const m = GOAL_I18N[state.lang] && GOAL_I18N[state.lang][g && g._id]; return (m && m.questions && m.questions[idx]) || TR(q); }
+    function goalShortTitle(g) { return goalText(g, "title").split(",")[0]; }
+    function packageText(p, field) { const m = PACKAGE_I18N[state.lang] && PACKAGE_I18N[state.lang][p && p._id]; return (m && m[field]) || TR(p && p[field] ? p[field] : ""); }
+    function packageTags(p) { const m = PACKAGE_I18N[state.lang] && PACKAGE_I18N[state.lang][p && p._id]; return (m && m.contains) || (p && p.contains) || []; }
+    function tagText(x) { return TR(x); }
+
+    function operatingUnit() { return CUSTOMER_TYPE_TO_OPERATING_UNIT[state.customerType] || "Shops"; }
+    function salespersonId() { return SALESPERSON_MAP[state.values.preparedBy] || null; }
+    function unitCount() { return state.customerType === "Retail Chain" ? Number(state.values.locations || 1) : Number(state.values.entrances || 1); }
+
+    function recommendedPackageKey() {
+      if (state.customerType === "Shopping Centre") {
+        return state.selectedPackage || "performance";
+      }
+      if (hasInstoreFit()) return "intelligence";
+      if (hasCaptureFit() || hasDemographicFit()) return "performance";
+      return "starter";
+    }
+
+    function syncRecommendedPackage() {
+      state.selectedPackage = recommendedPackageKey();
+    }
+
+    function routeLabel() {
+      if (state.customerType === "Shopping Centre") {
+        return { starter: "Foundation", performance: "Asset Intelligence", intelligence: "Portfolio Intelligence" }[state.selectedPackage] || "Asset Intelligence";
+      }
+      return packages[recommendedPackageKey()]?.name || "Essential";
+    }
+
+    function routeReason() {
+      if (state.customerType !== "Retail Chain") return TX("routeReasonShopping");
+      if (hasInstoreFit()) return TX("routeReasonInstore");
+      if (hasCaptureFit()) return TX("routeReasonCapture");
+      if (hasDemographicFit()) return TX("routeReasonDemo");
+      return TX("routeReasonBase");
+    }
+
+    function goalsCatalog() {
+      const source = state.customerType === "Shopping Centre" ? shoppingGoals : retailGoals;
+      return Object.fromEntries(Object.entries(source).map(([id, g]) => [id, { _id: id, ...g }]));
+    }
+
+    function selectedGoalObjects() {
+      const catalog = goalsCatalog();
+      return state.selectedGoals.map(id => catalog[id] ? ({ _id: id, ...catalog[id] }) : null).filter(Boolean);
+    }
+
+    function hiddenKpis() {
+      return [...new Set(selectedGoalObjects().flatMap(g => g.hiddenKpis))];
+    }
+
+    function hiddenSubscriptions() {
+      return [...new Set(selectedGoalObjects().flatMap(g => g.hiddenSubscriptions))];
+    }
+
+    function hasCaptureFit() {
+      const kpis = hiddenKpis();
+      return state.selectedGoals.includes("street_vs_store") || state.selectedGoals.includes("expansion_gut_feel") || kpis.includes("capture_rate") || kpis.includes("passerby_traffic") || kpis.includes("street_traffic");
+    }
+
+    function hasInstoreFit() {
+      const kpis = hiddenKpis();
+      return state.selectedGoals.includes("instore_unknown") || state.selectedGoals.includes("entrance_bounce") || kpis.includes("zone_traffic") || kpis.includes("dwell_time") || kpis.includes("heatmap") || kpis.includes("route_flow") || kpis.includes("interaction_time") || kpis.includes("staff_interaction");
+    }
+
+    function demographicAddonPricing() {
+      return RETAIL_PRICING.demographics || {};
+    }
+
+    function activeDemographicAddons() {
+      const kpis = hiddenKpis();
+      const pricing = demographicAddonPricing();
+      const addons = [];
+      if (kpis.includes("gender_split")) addons.push({ key: "gender", label: "Gender stats", monthly: Number(pricing.genderMonthlyPerSensor ?? 5) });
+      if (kpis.includes("adult_child_split")) addons.push({ key: "adult_child", label: "Adults / kids", monthly: Number(pricing.adultChildMonthlyPerSensor ?? 5) });
+      if (kpis.includes("group_count") || kpis.includes("group_size") || kpis.includes("buying_units")) addons.push({ key: "group_counting", label: "Group counting", monthly: Number(pricing.groupMonthlyPerSensor ?? 5) });
+      if (kpis.includes("age_category_future")) addons.push({ key: "age_future", label: "Age category future", monthly: Number(pricing.ageMonthlyPerSensorFuture ?? 5) });
+      const seen = new Set();
+      return addons.filter(a => {
+        if (seen.has(a.key)) return false;
+        seen.add(a.key);
+        return true;
+      });
+    }
+
+    function hasDemographicFit() {
+      return activeDemographicAddons().length > 0 || state.selectedGoals.includes("visitor_profile_unknown") || state.selectedGoals.includes("groups_distort_conversion");
+    }
+
+    function clamp(n, min, max) { return Math.max(min, Math.min(max, n)); }
+
+    function solutionComponents() {
+      const stores = Number(state.values.locations || 0);
+      const years = Number(state.values.tcoYears || 1);
+      const captureActive = hasCaptureFit();
+      const instoreActive = hasInstoreFit();
+      const rawCaptureStores = state.values.captureStores ?? Math.min(10, stores);
+      const captureStores = captureActive ? clamp(Number(rawCaptureStores), 0, stores || 0) : 0;
+      const instoreStores = instoreActive ? clamp(Number(state.values.instoreStores || 1), 1, stores || 1) : 0;
+      const avgSqm = Number(state.values.avgStoreSqm || 0);
+      const sqmCoverage = Number(state.values.instoreSqmCoveragePerSensor || 75);
+      const sensorsPerInstoreStore = instoreActive ? Math.max(1, Math.ceil(avgSqm / sqmCoverage)) : 0;
+      const instoreSensorUnits = instoreStores * sensorsPerInstoreStore;
+      const demographicAddons = activeDemographicAddons();
+      const demographicActive = hasDemographicFit();
+      const demographicUnits = demographicActive ? stores : 0;
+      const demographicMonthlyPerUnit = demographicAddons.reduce((sum, a) => sum + Number(a.monthly || 0), 0);
+      const demographicLabels = demographicAddons.map(a => a.label).join(", ");
+
+      const components = [
+        {
+          component_key: "entrance_performance",
+          component_label: "Entrance Performance Layer",
+          active: true,
+          scope_type: "all_stores",
+          stores_in_scope: stores,
+          units: stores,
+          unit_label: "stores",
+          capex_model: "per_store",
+          capex_per_unit: Number(state.values.entranceCapexStore || 0),
+          monthly_fee_per_unit: Number(state.values.entranceMonthlyStore || 0),
+          capex_total: stores * Number(state.values.entranceCapexStore || 0),
+          monthly_fee_total: stores * Number(state.values.entranceMonthlyStore || 0),
+          tco_total: stores * Number(state.values.entranceCapexStore || 0) + stores * Number(state.values.entranceMonthlyStore || 0) * 12 * years,
+          quote_note: "Premium entrance performance layer."
+        },
+        {
+          component_key: "capture_rate",
+          component_label: "Street Potential / Capture Rate Layer",
+          active: captureActive,
+          scope_type: captureActive ? "pilot_or_selected_stores" : "not_selected",
+          stores_in_scope: captureStores,
+          units: captureStores,
+          unit_label: "stores",
+          capex_model: "per_store",
+          capex_per_unit: Number(state.values.captureCapexStore || 0),
+          monthly_fee_per_unit: Number(state.values.captureMonthlyStore || 0),
+          capex_total: captureStores * Number(state.values.captureCapexStore || 0),
+          monthly_fee_total: captureStores * Number(state.values.captureMonthlyStore || 0),
+          tco_total: captureStores * Number(state.values.captureCapexStore || 0) + captureStores * Number(state.values.captureMonthlyStore || 0) * 12 * years,
+          quote_note: "Adds passer-by / street traffic measurement for capture-rate insight."
+        },
+        {
+          component_key: "instore_journey",
+          component_label: "In-store Journey Layer",
+          active: instoreActive,
+          scope_type: instoreActive ? "pilot_or_flagship_stores" : "not_selected",
+          stores_in_scope: instoreStores,
+          average_store_sqm: avgSqm,
+          sqm_coverage_per_sensor: sqmCoverage,
+          sensors_per_store: sensorsPerInstoreStore,
+          units: instoreSensorUnits,
+          unit_label: "sensors",
+          capex_model: "per_sqm",
+          capex_per_sqm: Number(state.values.instoreCapexPerSqm || 0),
+          monthly_fee_per_unit: Number(state.values.instoreMonthlySensor || 0),
+          capex_total: instoreStores * avgSqm * Number(state.values.instoreCapexPerSqm || 0),
+          monthly_fee_total: instoreSensorUnits * Number(state.values.instoreMonthlySensor || 0),
+          tco_total: instoreStores * avgSqm * Number(state.values.instoreCapexPerSqm || 0) + instoreSensorUnits * Number(state.values.instoreMonthlySensor || 0) * 12 * years,
+          quote_note: "Indicative in-store analytics scope for zone, journey and layout insights."
+        },
+        {
+          component_key: "visitor_profile_addons",
+          component_label: "Visitor Profile Dataset Add-ons",
+          active: demographicActive,
+          scope_type: demographicActive ? "activated_entrance_sensors" : "not_selected",
+          stores_in_scope: demographicUnits,
+          units: demographicUnits,
+          unit_label: "activated sensors",
+          capex_model: "license_addon",
+          capex_per_unit: 0,
+          monthly_fee_per_unit: demographicMonthlyPerUnit,
+          capex_total: 0,
+          monthly_fee_total: demographicUnits * demographicMonthlyPerUnit,
+          tco_total: demographicUnits * demographicMonthlyPerUnit * 12 * years,
+          quote_note: demographicLabels ? `Activated datasets: ${demographicLabels}. Indicative add-on pricing included.` : "Activated visitor profile datasets. Indicative add-on pricing included."
+        }
+      ];
+      return components;
+    }
+
+    function activeComponents() { return solutionComponents().filter(c => c.active); }
+
+    function commercialTotals() {
+      const components = activeComponents();
+      const capexTotal = components.reduce((sum,c) => sum + Number(c.capex_total || 0), 0);
+      const monthlyServiceTotal = components.reduce((sum,c) => sum + Number(c.monthly_fee_total || 0), 0);
+      const tcoTotal = components.reduce((sum,c) => sum + Number(c.tco_total || 0), 0);
+      const totalHardwareUnits = components.reduce((sum,c) => sum + Number(c.units || 0), 0);
+      return { capexTotal, monthlyServiceTotal, tcoTotal, totalHardwareUnits };
+    }
+
+    function calc() {
+      // This mirrors the current Streamlit ROI calculator logic, with component-based TCO.
+      const stores = Number(state.values.locations || 0);
+      const weekly = Number(state.values.weeklyFootfall || 0);
+      const openDays = Number(state.values.openDays || 6);
+      const visitorsDay = openDays > 0 ? weekly / openDays : 0;
+      const conv = Number(state.values.conversionRate || 0) / 100;
+      const atv = Number(state.values.avgTicket || 0);
+      const margin = Number(state.values.grossMargin || 0) / 100;
+      const footfallUplift = Number(state.values.footfallUplift || 0) / 100;
+      const conversionUplift = Number(state.values.conversionUplift || 0) / 100;
+      const atvUplift = Number(state.values.atvUplift || 0) / 100;
+      const satShare = Number(state.values.satShare || 0) / 100;
+      const satBoost = Number(state.values.satBoost || 0) / 100;
+      const tcoYears = Number(state.values.tcoYears || 1);
+      const realisation = Number(state.values.realisationFactor || 0) / 100;
+
+      const visitorsDayNew = visitorsDay * (1 + footfallUplift);
+      const convNew = Math.min(1, conv + conversionUplift);
+      const atvNew = atv * (1 + atvUplift);
+
+      const visitorsYearStore = visitorsDay * openDays * 52;
+      const visitorsYearStoreNew = visitorsDayNew * openDays * 52;
+      const turnoverYearStore = visitorsYearStore * conv * atv;
+
+      const nonSatVisitorsNew = visitorsYearStoreNew * (1 - satShare);
+      const satVisitorsNew = visitorsYearStoreNew * satShare;
+      const turnoverYearStoreNew = (nonSatVisitorsNew * convNew * atvNew) + (satVisitorsNew * convNew * (1 + satBoost) * atvNew);
+
+      const upliftYearStore = Math.max(0, turnoverYearStoreNew - turnoverYearStore);
+      const extraProfitYearStore = upliftYearStore * margin;
+
+      const baselineRevenue = turnoverYearStore * stores;
+      const revenueYearTotalNew = turnoverYearStoreNew * stores;
+      const theoreticalUplift = upliftYearStore * stores;
+      const theoreticalProfit = extraProfitYearStore * stores;
+      const upliftContractTotal = theoreticalUplift * tcoYears;
+      const theoreticalProfitContract = theoreticalProfit * tcoYears;
+      const realisticProfit = theoreticalProfit * realisation;
+      const realisticProfitContract = theoreticalProfitContract * realisation;
+
+      const totals = commercialTotals();
+      const tco = totals.tcoTotal;
+      const monthlyServiceTotal = totals.monthlyServiceTotal;
+      const capexTotal = totals.capexTotal;
+      const netValue = realisticProfitContract - tco;
+      const roi = tco > 0 ? (netValue / tco) * 100 : 0;
+      const realisticExtraProfitMonthAfterSubscription = (realisticProfit / 12) - monthlyServiceTotal;
+      const paybackMonths = realisticExtraProfitMonthAfterSubscription > 0 ? capexTotal / realisticExtraProfitMonthAfterSubscription : 0;
+
+      const convOnlyTurnoverYearStore = (nonSatVisitorsNew * convNew * atv) + (satVisitorsNew * convNew * (1 + satBoost) * atv);
+      const footfallOnlyTurnoverYearStore = visitorsYearStoreNew * conv * atv;
+      const atvOnlyTurnoverYearStore = visitorsYearStore * conv * atvNew;
+      const convComponent = Math.max(0, convOnlyTurnoverYearStore - turnoverYearStore) * stores;
+      const footfallComponent = Math.max(0, footfallOnlyTurnoverYearStore - turnoverYearStore) * stores;
+      const atvComponent = Math.max(0, atvOnlyTurnoverYearStore - turnoverYearStore) * stores;
+
+      return {
+        baselineRevenue,
+        revenueYearTotalNew,
+        theoreticalUplift,
+        theoreticalProfit,
+        realisticProfit,
+        upliftContractTotal,
+        theoreticalProfitContract,
+        realisticProfitContract,
+        tco,
+        capexTotal,
+        monthlyServiceTotal,
+        netValue,
+        paybackMonths,
+        roi,
+        visitorsDay,
+        visitorsYearStore,
+        visitorsYearStoreNew,
+        convNew,
+        atvNew,
+        footfallComponent,
+        convComponent,
+        atvComponent
+      };
+    }
+
+    function payload() {
+      const c = calc();
+      const ou = operatingUnit();
+      const components = solutionComponents();
+      const active = activeComponents();
+      const totals = commercialTotals();
+      const templateId = OPPORTUNITY_MAP[state.opportunityType] || null;
+      const context = state.customerType === "Retail Chain"
+        ? {
+            segment: state.values.segment,
+            locations: Number(state.values.locations),
+            weekly_footfall_per_store: Number(state.values.weeklyFootfall),
+            daily_footfall_per_store: Math.round(Number(state.values.weeklyFootfall) / Number(state.values.openDays || 6)),
+            current_measurement: state.values.measurement
+          }
+        : {
+            centre_type: state.values.centreType,
+            entrances: Number(state.values.entrances),
+            centre_surface_sqm: Number(state.values.centreSurface),
+            stores_present: Number(state.values.storesPresent)
+          };
+
+      const roiRows = [
+        { Metric: "Stores", Value: Number(state.values.locations), Context: "Retail chain input" },
+        { Metric: "Daily footfall", Value: Math.round(Number(state.values.weeklyFootfall) / Number(state.values.openDays || 6)), Context: "Per store, derived from weekly footfall / open days" },
+        { Metric: "Weekly footfall", Value: Number(state.values.weeklyFootfall), Context: "Per store" },
+        { Metric: "Conversion rate", Value: pct(state.values.conversionRate), Context: "Baseline input" },
+        { Metric: "ATV", Value: euro(state.values.avgTicket), Context: "Average ticket value" },
+        { Metric: "Gross margin", Value: pct(state.values.grossMargin, 0), Context: "Input" },
+        { Metric: "Open days per week", Value: Number(state.values.openDays), Context: "ROI calculator logic" },
+        { Metric: "Contract term", Value: Number(state.values.tcoYears) + " years", Context: "TCO horizon" },
+        { Metric: "Footfall uplift", Value: pct(state.values.footfallUplift), Context: "What-if input" },
+        { Metric: "Conversion uplift", Value: pct(state.values.conversionUplift), Context: "What-if input" },
+        { Metric: "ATV uplift", Value: pct(state.values.atvUplift), Context: "What-if input" },
+        { Metric: "Saturday share", Value: pct(state.values.satShare), Context: "Optional Saturday scenario" },
+        { Metric: "Saturday boost", Value: pct(state.values.satBoost), Context: "Optional Saturday scenario" },
+        { Metric: "Realisation factor", Value: pct(state.values.realisationFactor, 0), Context: "Share of theoretical uplift captured" },
+        { Metric: "Revenue / year", Value: euro(c.baselineRevenue), Context: "Baseline for selected stores" },
+        { Metric: "Theoretical uplift / year", Value: euro(c.theoreticalUplift), Context: "Maximum scenario versus baseline" },
+        { Metric: "Theoretical extra profit / year", Value: euro(c.theoreticalProfit), Context: "Before realisation factor" },
+        { Metric: "Realistic extra profit / year", Value: euro(c.realisticProfit), Context: "After realisation factor" },
+        { Metric: "Total CAPEX", Value: euro(c.capexTotal), Context: "All active solution components" },
+        { Metric: "Monthly service total", Value: euro(c.monthlyServiceTotal), Context: "All active solution components" },
+        { Metric: "Total cost of ownership", Value: euro(c.tco), Context: Number(state.values.tcoYears) + "-year contract horizon" },
+        { Metric: "Realistic payback time", Value: c.paybackMonths ? c.paybackMonths.toFixed(1) + " months" : "n/a", Context: "Based on captured profit after subscription" },
+        { Metric: "Realistic ROI over horizon", Value: pct(c.roi), Context: "Net value: " + euro(c.netValue) }
+      ];
+
+      return {
+        source: "pfm_retail_potential_scan_v20",
+        submitted_at: new Date().toISOString(),
+        created_at: new Date().toISOString(),
+        language: state.lang,
+        num_stores: Number(state.values.locations),
+        amount_of_sensors: Number(state.values.locations),
+        total_hardware_units: totals.totalHardwareUnits,
+        stores_in_scope: Number(state.values.locations),
+        template_id: templateId,
+        operating_unit_id: OPERATING_UNIT_MAP[ou],
+        user_id: salespersonId(),
+        customer_visible: {
+          client_name: state.values.clientName,
+          customer_type: state.customerType,
+          operating_unit: ou,
+          prepared_by: state.values.preparedBy,
+          context,
+          selected_goals: selectedGoalObjects().map(g => g.title),
+          selected_insight_fits: [...new Set(selectedGoalObjects().map(g => g.insightFit))],
+          selected_package: routeLabel(),
+          active_solution_components: active.map(c => c.component_label),
+          estimated_baseline_revenue_year: Math.round(c.baselineRevenue),
+          realistic_extra_profit_year: Math.round(c.realisticProfit),
+          tco_total: Math.round(c.tco),
+          realistic_payback_months: c.paybackMonths || null
+        },
+        lead: {
+          company_name: state.values.clientName,
+          contact_name: null,
+          contact_email: null,
+          contact_phone: null,
+          operating_unit_label: ou,
+          salesperson_name: state.values.preparedBy,
+          opportunity_type_label: state.opportunityType,
+          template_id: templateId,
+          operating_unit_id: OPERATING_UNIT_MAP[ou],
+          user_id: salespersonId()
+        },
+        scenario: {
+          currency: "EUR",
+          num_stores: Number(state.values.locations),
+          daily_footfall_per_store: c.visitorsDay,
+          weekly_footfall_per_store: Number(state.values.weeklyFootfall),
+          conversion_rate_pct: Number(state.values.conversionRate),
+          average_ticket_value: Number(state.values.avgTicket),
+          gross_margin_pct: Number(state.values.grossMargin),
+          annual_footfall_per_store: c.visitorsYearStore,
+          annual_footfall_total: c.visitorsYearStore * Number(state.values.locations),
+          conversion_uplift_pp: Number(state.values.conversionUplift),
+          new_conversion_rate_pct: c.convNew * 100,
+          new_atv: c.atvNew,
+          atv_uplift_pct: Number(state.values.atvUplift),
+          footfall_uplift_pct: Number(state.values.footfallUplift),
+          open_days_per_week: Number(state.values.openDays),
+          contract_term_years: Number(state.values.tcoYears),
+          roi_approach: Object.entries(REALISATION_MAP).find(([_, value]) => Number(value) === Number(state.values.realisationFactor))?.[0] || "Custom",
+          realisation_factor_pct: Number(state.values.realisationFactor),
+          optional_saturday_scenario: {
+            sat_share_pct: Number(state.values.satShare),
+            sat_conversion_boost_pct: Number(state.values.satBoost)
+          },
+          commercial_assumptions: {
+            install_cost_per_store: Number(state.values.entranceCapexStore),
+            monthly_subscription_per_store: Number(state.values.entranceMonthlyStore),
+            tco_per_store: Number(state.values.entranceCapexStore) + Number(state.values.entranceMonthlyStore) * 12 * Number(state.values.tcoYears),
+            tco_total: c.tco,
+            component_based_tco: true,
+            total_capex: c.capexTotal,
+            monthly_service_total: c.monthlyServiceTotal
+          },
+          solution_components: components
+        },
+        results: {
+          revenue_year_total: c.baselineRevenue,
+          revenue_year_total_new: c.revenueYearTotalNew,
+          uplift_year_total: c.theoreticalUplift,
+          uplift_contract_total: c.upliftContractTotal,
+          theoretical_extra_profit_year_total: c.theoreticalProfit,
+          theoretical_extra_profit_contract_total: c.theoreticalProfitContract,
+          realistic_extra_profit_year_total: c.realisticProfit,
+          realistic_extra_profit_contract_total: c.realisticProfitContract,
+          tco_total: c.tco,
+          total_capex: c.capexTotal,
+          monthly_service_total: c.monthlyServiceTotal,
+          theoretical_net_value_horizon: c.theoreticalProfitContract - c.tco,
+          theoretical_roi_horizon_pct: c.tco > 0 ? ((c.theoreticalProfitContract - c.tco) / c.tco) * 100 : 0,
+          realistic_net_value_horizon: c.netValue,
+          realistic_roi_horizon_pct: c.roi,
+          theoretical_payback_months: null,
+          realistic_payback_months: c.paybackMonths || null,
+          uplift_components: {
+            footfall_component: c.footfallComponent,
+            conversion_component: c.convComponent,
+            atv_component: c.atvComponent
+          }
+        },
+        pfm_internal: {
+          operating_unit_name: ou,
+          operating_unit_id: OPERATING_UNIT_MAP[ou],
+          salesperson_name: state.values.preparedBy,
+          salesperson_id: salespersonId(),
+          opportunity_type: state.opportunityType,
+          template_id: templateId,
+          customer_context: context,
+          selected_performance_leaks: selectedGoalObjects().map(g => g.title),
+          selected_insight_fits: [...new Set(selectedGoalObjects().map(g => g.insightFit))],
+          hidden_kpis: hiddenKpis(),
+          hidden_subscriptions: hiddenSubscriptions(),
+          recommended_route: routeLabel(),
+          odoo_template: ODOO_TEMPLATE_MAP[ou][state.opportunityType],
+          suggested_odoo_action: "create_lead_or_indicative_proposal",
+          human_review_required: true,
+          solution_components: components,
+          active_solution_components: active,
+          roi_output_rows: roiRows
+        }
+      };
+    }
+
+    function populateSalespeople() {
+      const select = document.getElementById("preparedBy");
+      select.innerHTML = Object.keys(SALESPERSON_MAP).map(name => `<option>${name}</option>`).join("");
+      select.value = state.values.preparedBy;
+    }
+
+    function renderNav() {
+      const nav = document.getElementById("journeyNav");
+      nav.innerHTML = journey.map(j => `
+        <button class="journey-step ${j.id === state.step ? "active" : ""}" onclick="go(${j.id})">
+          <span>${j.icon}</span><span>${TR(j.label)}</span>
+        </button>
+      `).join("");
+      document.getElementById("nextBtn").textContent = L("next");
+      document.getElementById("backBtn").disabled = state.step === 1;
+      document.getElementById("nextBtn").disabled = state.step === 6;
+      document.querySelectorAll(".lang-btn").forEach(btn => btn.classList.toggle("active", btn.dataset.lang === state.lang));
+    }
+
+    function renderContextFields() {
+      const el = document.getElementById("contextFields");
+      if (state.customerType === "Retail Chain") {
+        el.innerHTML = `
+          <div class="form-grid">
+            <div><label>${L("segment")}</label><select id="segment"><option value="Fashion Retail">Fashion Retail</option><option value="Food & Beverage">Food & Beverage</option><option value="Sport & Outdoor">Sport & Outdoor</option><option value="Electronics">Electronics</option><option value="Footwear Retail">Footwear Retail</option></select></div>
+            <div><label>${L("locations")}</label><input id="locations" type="number" min="1" value="${state.values.locations}"></div>
+            <div><label>${L("weeklyFootfall")}</label><input id="weeklyFootfall" type="number" min="0" value="${state.values.weeklyFootfall}"></div>
+            <div><label>${L("measurement")}</label><select id="measurement"><option value="Basic counter">Basic counter</option><option value="None / manual">None / manual</option><option value="Dashboard">Dashboard</option><option value="Footfall + sales">Footfall + sales</option><option value="Current traffic and sales data">Current traffic and sales data</option></select></div>
+          </div>`;
+        document.getElementById("segment").value = state.values.segment;
+        document.getElementById("measurement").value = state.values.measurement;
+      } else {
+        const options = centreTypeOptions[state.lang].map(o => `<option>${o}</option>`).join("");
+        if (!centreTypeOptions[state.lang].includes(state.values.centreType)) state.values.centreType = centreTypeOptions[state.lang][0];
+        el.innerHTML = `
+          <div class="form-grid">
+            <div><label>${L("centreType")}</label><select id="centreType">${options}</select></div>
+            <div><label>${L("entrances")}</label><input id="entrances" type="number" min="1" value="${state.values.entrances}"></div>
+            <div><label>${L("centreSurface")} (m²)</label><input id="centreSurface" type="number" min="0" value="${state.values.centreSurface}"></div>
+            <div><label>${L("storesPresent")}</label><input id="storesPresent" type="number" min="0" value="${state.values.storesPresent}"></div>
+          </div>`;
+        document.getElementById("centreType").value = state.values.centreType;
+      }
+      ["segment","locations","weeklyFootfall","measurement","centreType","entrances","centreSurface","storesPresent"].forEach(id => {
+        const field = document.getElementById(id);
+        if (!field) return;
+        field.addEventListener("input", () => { readInputs(); renderAll(false); });
+        field.addEventListener("change", () => { readInputs(); renderAll(false); });
+      });
+    }
+
+    function readInputs() {
+      const map = {
+        clientName: "clientName", preparedBy: "preparedBy", segment: "segment", locations: "locations", weeklyFootfall: "weeklyFootfall",
+        measurement: "measurement", centreType: "centreType", entrances: "entrances", centreSurface: "centreSurface", storesPresent: "storesPresent"
+      };
+      Object.entries(map).forEach(([key, id]) => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        state.values[key] = el.type === "number" ? Number(el.value || 0) : el.value;
+      });
+      const opp = document.getElementById("opportunityType");
+      if (opp) state.opportunityType = opp.value;
+    }
+
+    function renderSummary() {
+      const c = calc();
+      const goals = selectedGoalObjects();
+      const summary = document.createElement("aside");
+      summary.className = "summary-card";
+      summary.innerHTML = `
+        <div class="kicker">${TX("liveScanSummary")}</div>
+        <h3>${state.values.clientName || "Company"}</h3>
+        <p class="muted">${TR(state.customerType)} ${TX("performanceScan")}</p>
+        <div style="margin:18px 0;">
+          ${goals.map(g => `<span class="summary-pill">${g.icon} ${goalShortTitle(g)}</span>`).join("") || `<span class="summary-pill">${TR("No goals selected")}</span>`}
+        </div>
+        ${state.customerType === "Retail Chain" ? `
+          <div class="summary-row"><span>${TX("locations")}</span><strong>${state.values.locations}</strong></div>
+          <div class="summary-row"><span>${TX("weeklyFootfall")}</span><strong id="summaryWeeklyFootfall">${Number(state.values.weeklyFootfall || 0).toLocaleString("de-DE")}</strong></div>
+          <div class="summary-row"><span>${TX("pfmRoute")}</span><strong>${TR(routeLabel())}</strong></div>
+          <div class="summary-row"><span>${TX("realisticProfit")}</span><strong id="summaryRealisticProfit">${euroCompact(c.realisticProfit)}</strong></div>
+        ` : `
+          <div class="summary-row"><span>${L("entrances")}</span><strong>${state.values.entrances}</strong></div>
+          <div class="summary-row"><span>${L("storesPresent")}</span><strong>${state.values.storesPresent}</strong></div>
+          <div class="summary-row"><span>${TR("Surface")}</span><strong>${Number(state.values.centreSurface || 0).toLocaleString("de-DE")} m²</strong></div>
+          <div class="summary-row"><span>${TR("Data modules")}</span><strong>${hiddenSubscriptions().length}</strong></div>
+        `}
+      `;
+      return summary.outerHTML;
+    }
+
+    function shoppingPlaceholder() {
+      return `
+        <div class="shopping-placeholder">
+          <div class="content-card">
+            <div class="kicker">${L("comingSoon")}</div>
+            <h2>Shopping Centre flow will be designed after Retail Chain is locked.</h2>
+            <p class="muted">The first screen already captures shopping centre context and stores it for n8n/Odoo. The next pages will get a dedicated journey for entrances, tenant value, visitor flow and asset performance.</p>
+            <div class="notice" style="margin-top:20px;">For now we focus on Retail Chain content, tools and business-case logic first. Once that flow is strong, we will build the Shopping Centre version with its own questions and outputs.</div>
+          </div>
+        </div>`;
+    }
+
+    function renderStep2() {
+      const target = document.getElementById("screen2Content");
+      const catalog = goalsCatalog();
+      const isShopping = state.customerType === "Shopping Centre";
+      target.innerHTML = `
+        <div class="content-card">
+          <div class="kicker">${TX(isShopping ? "shoppingDiagnosis" : "retailDiagnosis")}</div>
+          <h2>${TX(isShopping ? "shoppingLeakTitle" : "retailLeakTitle")}</h2>
+          <p class="muted">${TX(isShopping ? "shoppingLeakIntro" : "retailLeakIntro")}</p>
+          <div class="goal-grid">
+            ${Object.entries(catalog).map(([id, g]) => `
+              <div class="pain-card ${state.selectedGoals.includes(id) ? "active" : ""}" onclick="toggleGoal('${id}')">
+                <div>
+                  <div class="pain-icon">${g.icon}</div>
+                  ${g.cluster ? `<span class="tag" style="margin-bottom:10px;">${TR(g.cluster)}</span>` : ""}
+                  <h3>${goalText(g, "title")}</h3>
+                  <p class="muted">${goalText(g, "pain")}</p>
+                </div>
+                <span class="score-badge">${TX(state.selectedGoals.includes(id) ? "selected" : "select")}</span>
+              </div>
+            `).join("")}
+          </div>
+          <div class="page-actions"><button class="ghost-btn" onclick="go(1)">${TX("back")}</button><button class="primary-btn" onclick="go(3)">${TX("showInsightFit")}</button></div>
+        </div>
+        ${renderSummary()}`;
+    }
+
+    function renderStep3() {
+      const target = document.getElementById("screen3Content");
+      const goals = selectedGoalObjects();
+      const isShopping = state.customerType === "Shopping Centre";
+      target.innerHTML = `
+        <div class="content-card">
+          <div class="kicker">${TX("pfmFit")}</div>
+          <h2>${TX("insightTitle")}</h2>
+          <p class="muted">${TX(isShopping ? "insightIntroShopping" : "insightIntroRetail")}</p>
+          <div class="outcome-list">
+            ${goals.map(g => `
+              <div class="outcome-item">
+                <div class="pain-icon" style="margin:0;">${g.icon}</div>
+                <div>
+                  <h3>${goalText(g, "insightFit")}</h3>
+                  <p class="muted" style="margin:0 0 10px;">${goalText(g, "outcome")}</p>
+                  <div>${g.questions.slice(0,2).map((q, idx) => `<span class="tag">${goalQuestion(g, q, idx)}</span>`).join("")}</div>
+                  ${g.modules ? `<div style="margin-top:10px;">${g.modules.map(m => `<span class="tag">${tagText(m)}</span>`).join("")}</div>` : ""}
+                </div>
+                <span class="score-badge">${TR("PFM fit")}</span>
+              </div>`).join("")}
+          </div>
+          <div class="quote-box">
+            <div class="kicker">${TX("suggestedSalesStory")}</div>
+            <h3>“${TX(isShopping ? "salesStoryShopping" : "salesStoryRetail")}”</h3>
+            <p>${TX(isShopping ? "salesStoryShoppingSub" : "salesStoryRetailSub")}</p>
+          </div>
+          <div class="page-actions"><button class="ghost-btn" onclick="go(2)">${TX("back")}</button><button class="primary-btn" onclick="go(4)">${TX(isShopping ? "buildValueModel" : "buildImpactModel")}</button></div>
+        </div>
+        ${renderSummary()}`;
+    }
+
+    function renderModuleCards() {
+      const active = activeComponents();
+      if (!active.length) return "";
+      return `<div class="scope-table">${active.map(c => `
+        <div class="scope-row">
+          <div><strong>${componentText(c, "label")}</strong><small>${componentText(c, "note")}</small></div>
+          <div><span class="muted">${TX("scope")}</span><br><strong>${c.stores_in_scope}</strong></div>
+          <div><span class="muted">${TX("units")}</span><br><strong>${c.units}</strong></div>
+          <div><span class="muted">${TX("tco")}</span><br><strong>${euro(c.tco_total)}</strong></div>
+        </div>`).join("")}</div>`;
+    }
+
+    function activeModuleChips() {
+      return activeComponents().map(c => `<span class="fit-chip">✅ ${componentText(c, "label")}</span>`).join("");
+    }
+
+    function renderRoiOutput(c) {
+      const horizon = Number(state.values.tcoYears || 1);
+      return `
+        <div class="roi-output-grid">
+          <div class="roi-main-card">
+            <small>${TX("paybackTime")}</small>
+            <strong>${c.paybackMonths ? c.paybackMonths.toFixed(1) + " " + TX("monthsAbbrev") : TX("notAvailable")}</strong>
+            <span>${TX("paybackNote")}</span>
+          </div>
+          <div class="roi-mini-card compact"><small>${TX("revenueBaselineYear")}</small><strong>${euroCompact(c.baselineRevenue)}</strong></div>
+          <div class="roi-mini-card"><small>${TX("totalCapex")}</small><strong>${euro(c.capexTotal)}</strong></div>
+          <div class="roi-mini-card"><small>${TX("monthlyService")}</small><strong>${euro(c.monthlyServiceTotal)}</strong></div>
+          <div class="roi-mini-card"><small>${TX("tcoOver")} ${horizon} ${TX("years")}</small><strong>${euro(c.tco)}</strong></div>
+          <div class="roi-mini-card profit"><small>${TX("realisticExtraProfitYear")}</small><strong>${euroCompact(c.realisticProfit)}</strong></div>
+          <div class="roi-mini-card"><small>${TX("roiOverHorizon")}</small><strong>${pct(c.roi)}</strong></div>
+        </div>
+      `;
+    }
+
+    function impactId(key) { return `impact_${key}`; }
+
+    function rangeNumber(key, label, min, max, step, value, formatter) {
+      const id = impactId(key);
+      return `<div class="slider-group"><label>${label}<span class="slider-value" id="${id}Value">${formatter(value)}</span></label><div class="range-number-row"><input type="range" id="${id}" data-state-key="${key}" min="${min}" max="${max}" step="${step}" value="${value}"><input type="number" id="${id}Number" data-state-key="${key}" min="${min}" max="${max}" step="${step}" value="${value}"></div></div>`;
+    }
+
+    function compactNumberInput(key, label, value, step, min, max, formatter) {
+      const id = impactId(key);
+      const maxAttr = max === null || max === undefined ? "" : `max="${max}"`;
+      return `<div class="impact-number-card"><label>${label}<span class="slider-value" id="${id}Value">${formatter(value)}</span></label><input type="number" id="${id}" data-state-key="${key}" min="${min}" ${maxAttr} step="${step}" value="${value}"></div>`;
+    }
+
+    function roiScenarioSelect() {
+      const options = Object.entries(REALISATION_MAP).map(([name,value]) => `<option value="${value}" ${Number(state.values.realisationFactor) === Number(value) ? "selected" : ""}>${TR(name)} · ${pct(value,0)}</option>`).join("");
+      return `<div class="slider-group"><label>${TX("realisationScenario")}<span class="slider-value" id="${impactId("realisationFactor")}Value">${pct(Number(state.values.realisationFactor || 0),0)}</span></label><select class="scenario-select" id="${impactId("realisationFactor")}" data-state-key="realisationFactor">${options}</select></div>`;
+    }
+
+    function renderStep4() {
+      const target = document.getElementById("screen4Content");
+      if (state.customerType === "Shopping Centre") { renderShoppingValueModel(); return; }
+      const c = calc();
+      const capture = hasCaptureFit();
+      const instore = hasInstoreFit();
+      target.innerHTML = `
+        <div class="content-card">
+          <div class="kicker">${TX("impactKicker")}</div>
+          <h2>${TX("impactTitlePrefix")} <span class="highlight">${TX("impactTitleHighlight")}</span></h2>
+          <p class="muted">${TX("impactIntro")}</p>
+          <div class="impact-v13-grid">
+            <div class="impact-input-panel">
+              <div class="impact-section-title"><div><h3>${TX("businessAssumptions")}</h3><p>${TX("editableScenario")}</p></div></div>
+              <div class="impact-slider-grid">
+                ${rangeNumber("weeklyFootfall", TX("footfallWeekPerStore"), 0, 70000, 100, state.values.weeklyFootfall, v => Number(v).toLocaleString("de-DE"))}
+                <div class="inline-input-row">
+                  ${compactNumberInput("conversionRate", TX("currentConversionRate"), state.values.conversionRate, 0.1, 0, 100, v => pct(v))}
+                  ${compactNumberInput("avgTicket", TX("averageTicketValue"), state.values.avgTicket, 1, 0, null, v => euro(v))}
+                </div>
+                ${slider("grossMargin", TX("grossMargin"), 5, 95, 1, state.values.grossMargin, v => pct(v,0))}
+                ${capture ? slider("footfallUplift", TX("expectedFootfallUpliftFromCapture"), 0, 10, .1, state.values.footfallUplift, v => pct(v)) : ""}
+                ${slider("conversionUplift", TX("conversionUpliftThroughPFM"), 0, 10, .1, state.values.conversionUplift, v => pct(v))}
+                ${slider("atvUplift", TX("atvUplift"), 0, 10, .1, state.values.atvUplift, v => pct(v))}
+                ${roiScenarioSelect()}
+              </div>
+              <div class="fit-module-strip" id="fitModuleStrip">${activeModuleChips()}</div>
+              <details class="advanced-impact">
+                <summary>${TX("advancedScopePricing")}</summary>
+                <div class="advanced-body">
+                  <div class="pricing-grid-v13">
+                    ${numberField("openDays", TX("openDaysWeek"), state.values.openDays)}
+                    ${numberField("tcoYears", TX("contractTermYears"), state.values.tcoYears)}
+                    ${capture ? numberField("captureStores", TX("captureStoresScope"), clamp(Number(state.values.captureStores ?? 0), 0, Number(state.values.locations || 0))) : ""}
+                    ${instore ? numberField("instoreStores", TX("instorePilotStores"), Math.min(state.values.instoreStores, state.values.locations)) : ""}
+                    ${instore ? numberField("avgStoreSqm", TX("avgStoreSize"), state.values.avgStoreSqm) : ""}
+                  </div>
+                  <div style="height:14px"></div>
+                  <div id="moduleCardsHost">${renderModuleCards()}</div>
+                </div>
+              </details>
+            </div>
+            <div class="impact-output-panel" id="impactOutputPanel">
+              <div class="impact-section-title"><div><h3>${TX("roiOutput")}</h3><p>${TX("roiLogic")}</p></div></div>
+              <div id="roiOutputInner">${renderRoiOutput(c)}</div>
+            </div>
+          </div>
+          <div class="page-actions"><button class="ghost-btn" onclick="go(3)">${TX("back")}</button><button class="primary-btn" onclick="go(5)">${TX("chooseRoute")}</button></div>
+        </div>
+        ${renderSummary()}`;
+      attachImpactInputs();
+    }
+
+    function slider(key, label, min, max, step, value, formatter) {
+      const id = impactId(key);
+      return `<div class="slider-group"><label>${label}<span class="slider-value" id="${id}Value">${formatter(value)}</span></label><input type="range" id="${id}" data-state-key="${key}" min="${min}" max="${max}" step="${step}" value="${value}"></div>`;
+    }
+
+    function numberField(key, label, value) {
+      const id = impactId(key);
+      return `<div class="number-field"><label>${label}<span class="slider-value" id="${id}Value">${value}</span></label><input type="number" id="${id}" data-state-key="${key}" value="${value}" min="0" step="1"></div>`;
+    }
+
+    function attachImpactInputs() {
+      const formatters = {
+        weeklyFootfall: v => Number(v).toLocaleString("de-DE"),
+        conversionRate: v => pct(Number(v)),
+        avgTicket: v => euro(Number(v)),
+        grossMargin: v => pct(Number(v),0),
+        footfallUplift: v => pct(Number(v)),
+        conversionUplift: v => pct(Number(v)),
+        atvUplift: v => pct(Number(v)),
+        openDays: v => Number(v),
+        tcoYears: v => Number(v),
+        captureStores: v => Number(v),
+        instoreStores: v => Number(v),
+        avgStoreSqm: v => Number(v),
+        realisationFactor: v => pct(Number(v),0)
+      };
+      const refresh = (key, value) => {
+        state.values[key] = Number(value);
+        if (key === "captureStores") state.values.captureStores = clamp(state.values.captureStores, 0, Number(state.values.locations || 0));
+        if (key === "instoreStores") state.values.instoreStores = clamp(state.values.instoreStores, 0, Number(state.values.locations || 0));
+        const id = impactId(key);
+        const label = document.getElementById(`${id}Value`);
+        if (label && formatters[key]) label.textContent = formatters[key](state.values[key]);
+        const twin = document.getElementById(`${id}Number`);
+        if (twin && Number(twin.value) !== Number(state.values[key])) twin.value = state.values[key];
+        const el = document.getElementById(id);
+        if (el && el.type === "range" && Number(el.value) !== Number(state.values[key])) el.value = state.values[key];
+        const currentCalc = calc();
+        const output = document.getElementById("roiOutputInner");
+        if (output) output.innerHTML = renderRoiOutput(currentCalc);
+
+        // Keep the visible scope/module cards in sync while editing advanced assumptions.
+        // Previously the state was updated, but the module cards only refreshed after Next/Back.
+        const moduleCardsHost = document.getElementById("moduleCardsHost");
+        if (moduleCardsHost) moduleCardsHost.innerHTML = renderModuleCards();
+        const fitModuleStrip = document.getElementById("fitModuleStrip");
+        if (fitModuleStrip) fitModuleStrip.innerHTML = activeModuleChips();
+
+        // Sync visible input and label values, including number-only fields without a range twin.
+        const currentInput = document.getElementById(id);
+        if (currentInput && currentInput.type !== "range" && Number(currentInput.value) !== Number(state.values[key])) currentInput.value = state.values[key];
+
+        // Update all Live Scan Summary instances. Multiple steps can contain a summary
+        // with the same id while hidden, so getElementById can hit the wrong one.
+        document.querySelectorAll("#summaryRealisticProfit").forEach(el => {
+          el.textContent = euroCompact(currentCalc.realisticProfit);
+        });
+        document.querySelectorAll("#summaryWeeklyFootfall").forEach(el => {
+          el.textContent = Number(state.values.weeklyFootfall || 0).toLocaleString("de-DE");
+        });
+        renderHero();
+        applyTranslations(document);
+      };
+      ["weeklyFootfall","conversionRate","avgTicket","grossMargin","footfallUplift","conversionUplift","atvUplift","openDays","tcoYears","captureStores","instoreStores","avgStoreSqm"].forEach(key => {
+        const id = impactId(key);
+        const el = document.getElementById(id);
+        if (el) { el.addEventListener("input", () => refresh(key, el.value)); el.addEventListener("change", () => refresh(key, el.value)); }
+        const twin = document.getElementById(`${id}Number`);
+        if (twin) { twin.addEventListener("input", () => refresh(key, twin.value)); twin.addEventListener("change", () => refresh(key, twin.value)); }
+      });
+      const realisation = document.getElementById(impactId("realisationFactor"));
+      if (realisation) {
+        realisation.addEventListener("change", () => refresh("realisationFactor", realisation.value));
+      }
+    }
+
+    function shoppingModuleGroups() {
+      const subs = hiddenSubscriptions();
+      const includes = prefix => subs.filter(s => s.includes(prefix));
+      const selected = selectedGoalObjects();
+      const modules = [...new Set(selected.flatMap(g => g.modules || []))];
+      return [
+        { title: "Sensor-based foundation", body: "3D entrance, zone, facility and tenant counting where accurate and validated counts are required.", items: modules.filter(m => /Sensor|Entrance|Zone|Tenant|Facility|Demographics|Dwell|Cross/i.test(m)) },
+        { title: "Smart data / geo-app layer", body: "Catchment, competitor overlap, brand affinity, visitor frequency and household profile. This is a data service, not extra sensor hardware.", items: modules.filter(m => /Geo|Catchment|Brand|Battlecard|Smart|Leasing|Marketing/i.test(m)) },
+        { title: "ANPR / mobility layer", body: "Car counts, vehicle dwell, parking occupancy, origin country/region and mobility pressure for retail parks or car-led centres.", items: modules.filter(m => /ANPR|Parking|Vehicle|Cross-border|Mobility/i.test(m)) },
+        { title: "Portfolio / BI layer", body: "Executive dashboards, benchmarking, LVI/asset health, forecasting and portfolio ranking.", items: modules.filter(m => /Portfolio|LVI|Forecast|Executive|Benchmark/i.test(m)) }
+      ].filter(g => g.items.length);
+    }
+
+    function renderShoppingValueModel() {
+      const target = document.getElementById("screen4Content");
+      const groups = shoppingModuleGroups();
+      target.innerHTML = `
+        <div class="content-card">
+          <div class="kicker">${TX("shoppingValueModel")}</div>
+          <h2>${TX("shoppingValueTitlePrefix")} <span class="highlight">${TX("shoppingValueTitleHighlight")}</span></h2>
+          <p class="muted">${TX("shoppingValueIntro")}</p>
+          <div class="outcome-list">
+            ${groups.map(g => `
+              <div class="outcome-item">
+                <div class="pain-icon" style="margin:0;">${g.title.includes("Smart") ? "🗺️" : g.title.includes("ANPR") ? "🚗" : g.title.includes("Portfolio") ? "📊" : "📡"}</div>
+                <div>
+                  <h3>${TR(g.title)}</h3>
+                  <p class="muted" style="margin:0 0 10px;">${TR(g.body)}</p>
+                  <div>${g.items.map(i => `<span class="tag">${tagText(i)}</span>`).join("")}</div>
+                </div>
+                <span class="score-badge">${TX("active")}</span>
+              </div>
+            `).join("")}
+          </div>
+          <div class="notice" style="margin-top:22px;">${TX("shoppingNotice")}</div>
+          <div class="page-actions"><button class="ghost-btn" onclick="go(3)">${TX("back")}</button><button class="primary-btn" onclick="go(5)">${TX("chooseRoute")}</button></div>
+        </div>
+        ${renderSummary()}`;
+    }
+
+    function renderShoppingRoute() {
+      const target = document.getElementById("screen5Content");
+      const routeCards = SHOPPING_ROUTE_I18N[state.lang] || SHOPPING_ROUTE_I18N.EN;
+      target.innerHTML = `
+        <div class="content-card">
+          <div class="kicker">${TX("recommendedRoute")}</div>
+          <h2>${TX("shoppingRouteTitlePrefix")} <span class="highlight">${TX("shoppingRouteTitleHighlight")}</span></h2>
+          <p class="muted">${TX("shoppingRouteIntro")}</p>
+          <div class="package-grid">
+            ${routeCards.map(p => `
+              <div class="package-card ${state.selectedPackage === p.id ? "active" : ""}" onclick="selectPackage('${p.id}')">
+                <h3>${p.name}</h3>
+                <p class="muted">${p.headline}</p>
+                <p class="muted">${p.promise}</p>
+                <div>${p.tags.map(t => `<span class="tag">${t}</span>`).join("")}</div>
+              </div>
+            `).join("")}
+          </div>
+          <div class="notice" style="margin-top:24px;">${TX("shoppingRouteNotice")}</div>
+          <div class="page-actions"><button class="ghost-btn" onclick="go(4)">${TX("back")}</button><button class="primary-btn" onclick="go(6)">${TX("viewSummary")}</button></div>
+        </div>
+        ${renderSummary()}`;
+    }
+
+    function renderStep5() {
+      const target = document.getElementById("screen5Content");
+      if (state.customerType === "Shopping Centre") { renderShoppingRoute(); return; }
+      syncRecommendedPackage();
+      const recommended = recommendedPackageKey();
+      const totals = commercialTotals();
+      target.innerHTML = `
+        <div class="content-card">
+          <div class="kicker">${TX("recommendedRoute")}</div>
+          <h2>${TX("routeTitlePrefix")} <span class="highlight">${TX("routeTitleHighlight")}</span></h2>
+          <p class="muted">${TX("routeIntro")}</p>
+          <div class="metric-grid" style="margin-top:20px;">
+            <div class="metric-card primary"><small>${TX("recommendedRoute")}</small><strong>${TR(routeLabel())}</strong></div>
+            <div class="metric-card"><small>${TX("monthlyServiceFromScope")}</small><strong>${euro(totals.monthlyServiceTotal)} ${TX("perMonth")}</strong></div>
+          </div>
+          <div class="package-grid">
+            ${Object.entries(packages).map(([id,p]) => `
+              <div class="package-card ${recommended === id ? "active" : ""}">
+                <h3>${packageText(p, "name")}</h3>
+                <p class="muted">${packageText(p, "headline")}</p>
+                <div class="package-price">${recommended === id ? `${euro(totals.monthlyServiceTotal)} ${TX("perMonth")}` : TX("notSelected")}</div>
+                <p class="muted">${packageText(p, "promise")}</p>
+                <div>${packageTags(p).map(c => `<span class="tag">${tagText(c)}</span>`).join("")}</div>
+              </div>
+            `).join("")}
+          </div>
+          <div class="notice" style="margin-top:24px;"><strong>${TX("whyThisRoute")}</strong> ${routeReason()} ${TX("routeRefine")}</div>
+          <div class="page-actions"><button class="ghost-btn" onclick="go(4)">${TX("back")}</button><button class="primary-btn" onclick="go(6)">${TX("viewSummary")}</button></div>
+        </div>
+        ${renderSummary()}`;
+    }
+
+    function renderStep6() {
+      const target = document.getElementById("screen6Content");
+      const c = calc();
+      const goals = selectedGoalObjects();
+      target.innerHTML = `
+        <div class="content-card">
+          <div class="kicker">${TX("conversationSummary") || TR("Conversation summary")}</div>
+          <h2>${TX("summaryTitlePrefix")} <span class="highlight">${TX("summaryTitleHighlight")}</span></h2>
+          <p class="muted">${TX("summaryIntro")}</p>
+
+          <div class="metric-grid" style="margin-top:24px;">
+            <div class="metric-card black"><small>${TX("potentialPayback") || TR("Potential payback")}</small><strong>${c.paybackMonths ? c.paybackMonths.toFixed(1) + " " + TX("monthsAbbrev") : TX("notAvailable")}</strong></div>
+            <div class="metric-card purple"><small>${TX("indicativeExtraProfitYear") || TR("Indicative extra profit / year")}</small><strong>${euroCompact(c.realisticProfit)}</strong></div>
+            <div class="metric-card"><small>${TX("storesInScope") || TR("Stores in scope")}</small><strong>${state.values.locations}</strong></div>
+            <div class="metric-card"><small>${TX("recommendedRoute")}</small><strong>${TR(routeLabel())}</strong></div>
+          </div>
+
+          <div class="outcome-list" style="margin-top:24px;">
+            ${goals.map(g => `
+              <div class="outcome-item">
+                <div class="pain-icon" style="margin:0;">${g.icon}</div>
+                <div>
+                  <h3>${goalText(g, "insightFit")}</h3>
+                  <p class="muted" style="margin:0;">${goalText(g, "outcome")}</p>
+                </div>
+                <span class="score-badge">${TX("selected")}</span>
+              </div>`).join("")}
+          </div>
+
+          <div class="quote-box">
+            <div class="kicker">${TX("suggestedNextStep")}</div>
+            <h3>${TX("validateAssumptions")}</h3>
+            <p>${TX("summaryNextCopy")}</p>
+          </div>
+
+          <div class="page-actions"><button class="ghost-btn" onclick="go(5)">${TX("back")}</button><button class="primary-btn" onclick="go(1)">${TX("startNewScan")}</button></div>
+        </div>
+        ${renderSummary()}`;
+    }
+
+    function renderHero() {
+      const name = state.values.clientName || (state.customerType === "Shopping Centre" ? "your centre" : "your retail chain");
+      document.getElementById("heroCompany").textContent = name;
+      const miniUpside = document.getElementById("miniUpside");
+      if (miniUpside) miniUpside.textContent = euroCompact(calc().realisticProfit || 420000);
+      document.querySelectorAll(".customer-card").forEach(card => card.classList.toggle("active", card.dataset.type === state.customerType));
+    }
+
+    function renderActiveStep() {
+      if (state.step === 2) renderStep2();
+      if (state.step === 3) renderStep3();
+      if (state.step === 4) renderStep4();
+      if (state.step === 5) renderStep5();
+      if (state.step === 6) renderStep6();
+    }
+
+    function renderAll(rebuildContext = true) {
+      readInputs();
+      document.querySelectorAll(".screen").forEach(screen => {
+        const isActive = Number(screen.dataset.screen) === Number(state.step);
+        screen.classList.toggle("active", isActive);
+        screen.style.display = isActive ? "block" : "none";
+      });
+      renderNav();
+      renderHero();
+      if (rebuildContext) renderContextFields();
+      renderActiveStep();
+      applyTranslations(document);
+    }
+
+    function go(step) {
+      state.step = Math.max(1, Math.min(6, step));
+      renderAll(true);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+
+    function toggleGoal(id) {
+      if (state.selectedGoals.includes(id)) {
+        state.selectedGoals = state.selectedGoals.filter(g => g !== id);
+      } else {
+        state.selectedGoals.push(id);
+      }
+      if (!state.selectedGoals.length) state.selectedGoals = [id];
+      renderAll(false);
+    }
+
+    function selectPackage(id) {
+      state.selectedPackage = id;
+      renderAll(false);
+    }
+
+    function downloadPayload() {
+      const blob = new Blob([JSON.stringify(payload(), null, 2)], { type: "application/json" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = "pfm_retail_potential_scan_payload.json";
+      a.click();
+      URL.revokeObjectURL(a.href);
+    }
+
+    document.getElementById("nextBtn").addEventListener("click", () => go(state.step + 1));
+    document.getElementById("backBtn").addEventListener("click", () => go(state.step - 1));
+    function setLanguage(lang) {
+      state.lang = lang;
+      document.documentElement.lang = String(lang || "EN").toLowerCase();
+      renderAll(true);
+    }
+    window.setLanguage = setLanguage;
+    document.querySelectorAll(".lang-btn").forEach(btn => btn.addEventListener("click", () => setLanguage(btn.dataset.lang)));
+    document.querySelectorAll(".customer-card").forEach(card => card.addEventListener("click", () => {
+      state.customerType = card.dataset.type;
+      if (state.customerType === "Retail Chain") state.selectedGoals = ["baseline_missing", "visitors_not_buying"];
+      if (state.customerType === "Shopping Centre") state.selectedGoals = ["centre_baseline", "tenant_capture", "catchment_geo"];
+      renderAll(true);
+    }));
+
+    document.getElementById("clientName").addEventListener("input", () => { readInputs(); renderHero(); renderAll(false); });
+    document.getElementById("preparedBy").addEventListener("change", () => { readInputs(); renderAll(false); });
+
+    populateSalespeople();
+    renderContextFields();
+    renderAll(true);
+  
