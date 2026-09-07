@@ -56,7 +56,7 @@ Approved work:
 Evidence:
 - Tim framed the issue as a commercial story problem, not a quote problem. Source: FB-ANNA-0707.
 - Anna's proposed flow is website or digital brochure, sales funnel, pain points, KPIs, ROI, indicative solution, then quote. Source: FB-ANNA-0707.
-- Related backlog: DQB-021, DQB-022.
+- Related backlog: completed sales-conversation framing, completed commercial summary.
 
 ### 2. Trust and scope clarity
 
@@ -72,7 +72,7 @@ Evidence:
 - The July 5 reviewer said value depends on correct and realistic prospect-shared numbers. Source: `feedback/inbox/feedback_from_emails.md:28`.
 - Anna wants final pricing to come from Odoo and avoid parallel price sources. Source: FB-ANNA-0707.
 - Pricing is currently local and indicative. Source: `pricing-config.js:1-9`.
-- Related backlog: DQB-002, DQB-019, DQB-023.
+- Related backlog: DQB-002, DQB-016, DQB-018.
 
 ### 3. First-screen intake upgrade
 
@@ -92,7 +92,7 @@ Evidence:
 - Retail sales/service context request. Source: `feedback/inbox/feedback_from_emails.md:9`.
 - Shopping-centre maturity and parking request. Source: `feedback/inbox/feedback_from_emails.md:7-8`.
 - Input-field flexibility request. Source: FB-PDF page 2.
-- Related backlog: DQB-006, DQB-007, DQB-008, DQB-009, DQB-014, DQB-024.
+- Related backlog: completed contact capture, DQB-005, DQB-006, DQB-007, DQB-011, completed country metadata.
 
 ### 4. Copy and localisation reliability pass
 
@@ -121,7 +121,7 @@ Evidence:
 - Reviewer said the current page is scattered and suggested one-by-one yes/no selection. Source: `feedback/inbox/feedback_from_emails.md:44-46`; FB-SHOT-LEAKS.
 - Michel requested checklist-style content and optional explanations. Source: `feedback/inbox/feedback_from_emails.md:12`.
 - Anna repeated the need for less text, less scrolling, smaller blocks, title/icon first and expansion later. Source: FB-ANNA-0707.
-- Related backlog: DQB-005, DQB-015.
+- Related backlog: completed compact-card work, DQB-012.
 
 ### 6. Shopping-centre MVP clarity
 
@@ -135,7 +135,7 @@ Evidence:
 - Bart said retail is compelling but shopping centres are vague and need Wendy or client input. Source: `feedback/inbox/feedback_from_emails.md:67`.
 - Michel requested shopping-centre maturity and parking. Source: `feedback/inbox/feedback_from_emails.md:7-8`.
 - Brand guidance cautions against unsupported performance claims. Source: BRAND-GUIDE.
-- Related backlog: DQB-009, DQB-010.
+- Related backlog: DQB-007, DQB-008.
 
 ### 7. Digital brochure and commercial summary
 
@@ -147,7 +147,7 @@ Approved work:
 Evidence:
 - The latest feedback confirms Quotation Builder and Digital Brochure are higher priority than website lead generation. Source: FB-ANNA-0707.
 - Anna wants one interactive digital environment and sees the Digital Brochure as follow-up material. Source: FB-ANNA-0707.
-- Related backlog: DQB-018, DQB-022, DQB-025, DQB-026.
+- Related backlog: DQB-015, completed commercial summary, DQB-019, DQB-020.
 
 ### 8. Route/package interaction and naming
 
@@ -160,7 +160,16 @@ Approved work:
 Evidence:
 - Bart asked why "route" rather than "solutions" and questioned pricing totals. Source: FB-PDF page 4.
 - Reviewer asked whether the other two package tiles could be selected for quick recalculation. Source: `feedback/inbox/feedback_from_emails.md:52-54`; FB-SHOT-ROUTE.
-- Related backlog: DQB-011, DQB-012.
+- Related backlog: DQB-009, completed package interaction.
+
+### 9. Required context fields
+
+Approved decision:
+- Contact role remains mandatory before a user can progress. All fields continue to be required for the current Phase 1 flow.
+
+Evidence:
+- Stakeholder decision, 2026-07-22, resolving the conflicting optional-role request in `FB-2107-ODOO-INTEGRATION`.
+- Related backlog: completed navigation gating.
 
 ## Explicitly Out Of Scope For Phase 1
 

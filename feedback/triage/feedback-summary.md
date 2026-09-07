@@ -1,6 +1,6 @@
 # Feedback Summary
 
-Status: initial triage processed from existing inbox assets on 2026-07-08. Delta triage added on 2026-07-08 for the new Anna/workflow feedback file. No application code was changed.
+Status: initial triage processed from existing inbox assets on 2026-07-08. Delta triage added on 2026-07-08 for the new Anna/workflow feedback file, on 2026-07-10 for Retail diagnosis wording feedback, on 2026-07-15 for Anna interface/content/ROI/export feedback, and on 2026-07-21 for Odoo payload, validation and package-mapping feedback. No application code was changed.
 
 ## Source Register
 
@@ -22,6 +22,10 @@ Status: initial triage processed from existing inbox assets on 2026-07-08. Delta
 | FB-SHOT-IMPACT | `feedback/inbox/Screenshot 2026-07-02 at 09.30.11.png` | Impact model heading/copy. |
 | FB-SHOT-PADDING | `feedback/inbox/Screenshot 2026-07-02 at 09.30.42.png` | Impact assumptions padding/layout. |
 | FB-SHOT-ROUTE | `feedback/inbox/Screenshot 2026-07-02 at 09.31.10.png` | Route/package card interaction. |
+| FB-1007-RETAIL-DIAGNOSIS-WORDING | `feedback/inbox/feedback-2026-07-10-retail-diagnosis-wording.md:1-20` | New raw feedback added 2026-07-10. Retail diagnosis title asks where performance leaks, but tiles are worded as goals instead of pains. |
+| FB-1007-RETAIL-DIAGNOSIS-SHOT | `feedback/inbox/Screenshot 2026-07-10 at 14.42.01.png` | Screenshot evidence for the same Retail diagnosis wording mismatch. |
+| FB-ANNA-1507 | `feedback/inbox/feedback-anna-2026-07-15-interface-content-roi-export.md:1-119` | New raw feedback from Anna added 2026-07-15. Covers responsive layout, Step 2 scroll/card wording, input segments, Live Scan Summary, Page 3 insights, ROI layout, German translation, and export/follow-up. |
+| FB-2107-ODOO-INTEGRATION | `feedback/inbox/2026-07-21.md:1-25` | New raw feedback added 2026-07-21. Covers a reduced Odoo payload, stable English backend IDs, validation rules, country/pricelist/template mapping, automated package/sensor scoping, webhook submission and quote confirmation. |
 | BRAND-GUIDE | `/Users/christiaanvanrooijen/Library/CloudStorage/OneDrive-PFM-Intelligence/AI/Codex/03-shared/brand/brand-guidelines.md` | Brand foundations, claims caution and source register. |
 | BRAND-TONE | `/Users/christiaanvanrooijen/Library/CloudStorage/OneDrive-PFM-Intelligence/AI/Codex/03-shared/brand/tone-of-voice.md` | Customer-as-hero, short copy, British English, reliability. |
 | BRAND-VISUAL | `/Users/christiaanvanrooijen/Library/CloudStorage/OneDrive-PFM-Intelligence/AI/Codex/03-shared/brand/visual-style.md` | Visual and UI implications. |
@@ -150,7 +154,7 @@ Direct evidence:
 - Anna sees the tool as a commercial assistant during Teams meetings, physical sales conversations, fairs and weblead support. Source: FB-ANNA-0707 at `feedback/inbox/feedback-anna-07072026.md:258-271`.
 
 Duplicate status:
-- Duplicates and strengthens the existing Phase 1 direction around guided sales use, pain-first flow and human review. Related backlog: DQB-003, DQB-005, DQB-016.
+- Duplicates and strengthens the existing Phase 1 direction around guided sales use, pain-first flow and human review. Related backlog: DQB-003, completed compact-card work, DQB-013.
 
 Phase 1 impact:
 - The current Phase 1 goal is impacted at the UX/content framing level. It should explicitly say the quote is the endpoint, not the starting point, and the first outcome is a stronger sales conversation inside the existing Digital Quote Builder.
@@ -163,7 +167,7 @@ Direct evidence:
 - The quote should move from sensor, bracket and injector language toward conversion improvement, staffing optimisation, revenue growth, benchmarking and ROI, with a commercial summary before the technical quote. Source: FB-ANNA-0707 at `feedback/inbox/feedback-anna-07072026.md:173-191`.
 
 Duplicate status:
-- Duplicates DQB-003 and DQB-005, but adds a stronger hardware-to-business-value requirement.
+- Duplicates DQB-003 and completed compact-card work, but adds a stronger hardware-to-business-value requirement.
 
 Phase 1 impact:
 - Phase 1 should prioritise a commercial summary layer before any technical quote handoff. Technical component language should be hidden, secondary or internal-only until the business value is clear.
@@ -175,7 +179,7 @@ Direct evidence:
 - Anna repeated that the UX needs less text, less scrolling, smaller blocks, title/icon first and expansion later. Source: FB-ANNA-0707 at `feedback/inbox/feedback-anna-07072026.md:320-334`.
 
 Duplicate status:
-- Direct duplicate of DQB-005 and supporting evidence for DQB-013.
+- Direct duplicate of completed compact-card work and supporting evidence for DQB-010.
 
 Phase 1 impact:
 - This makes the compact checklist with expanders the lower-risk default for Phase 1 unless the user explicitly prefers the sequential yes/no flow.
@@ -189,7 +193,7 @@ Direct evidence:
 - Anna flagged country-specific pricing logic: German project costs, installation rates and country-specific price models; salesperson chooses country and the tool gets the right pricing structure. Source: FB-ANNA-0707 at `feedback/inbox/feedback-anna-07072026.md:388-405`.
 
 Duplicate status:
-- Duplicates the existing human-review and pricing-safeguard direction in DQB-016 and DQB-019, but adds a new integration requirement for Odoo pricing and country-specific logic.
+- Duplicates the existing human-review and pricing-safeguard direction in DQB-013 and DQB-016, but adds a new integration requirement for Odoo pricing and country-specific logic.
 
 Phase 1 impact:
 - Phase 1 pricing should remain carefully labelled as indicative if it still uses local config. A new decision is needed on whether to add country as metadata now and whether to suppress or qualify prices until Odoo pricing is authoritative.
@@ -204,7 +208,7 @@ Direct evidence:
 - Lead nurturing should keep prospects warm through the digital brochure, ROI calculator and interactive parts, making the tool part of CRM. Source: FB-ANNA-0707 at `feedback/inbox/feedback-anna-07072026.md:423-449`.
 
 Duplicate status:
-- Partly duplicates DQB-018, but changes priority: Digital Brochure mode/section and quote-support assets should rank ahead of a lightweight public lead generator.
+- Partly duplicates DQB-015, but changes priority: Digital Brochure mode/section and quote-support assets should rank ahead of a lightweight public lead generator.
 
 Phase 1 impact:
 - The public lead-generator item remains out of Phase 1. A Digital Brochure mode/section or commercial-summary output may need to move earlier than originally framed, inside the existing Digital Quote Builder.
@@ -240,3 +244,248 @@ Status: processed as new/changed feedback since the last triage. This dated adde
 - Impacted: yes. This affects the approved Phase 1 requirement "Use compact cards with expanders as the default UX for step 2." Source: `feedback/decisions/approved-phase-1.md`.
 - No impact on pricing formulas, ROI formulas, Odoo/API payload logic, country metadata, or product/repo naming.
 - Suggested implementation decision before coding: either keep the two-column compact-card layout but make only the clicked card visually expand, or switch Step 2 to a single-column accordion/list where expansion cannot affect a neighbouring card.
+
+# Delta Triage Addendum - 2026-07-10 Retail Diagnosis Wording
+
+Status: processed as new feedback since the last triage. No application code was changed.
+
+## New Sources
+
+- `FB-1007-RETAIL-DIAGNOSIS-WORDING`: `feedback/inbox/feedback-2026-07-10-retail-diagnosis-wording.md:1-20`. Direct evidence: the Retail diagnosis slide is confusing because the heading asks "Where does performance leak today?" while all tiles are worded as goals instead of pains.
+- `FB-1007-RETAIL-DIAGNOSIS-SHOT`: `feedback/inbox/Screenshot 2026-07-10 at 14.42.01.png`. Screenshot evidence: tile examples include "Build a trusted performance baseline", "Turn visitor traffic into more buyers", "Understand who enters your stores" and "Compare stores fairly", which read as desired outcomes/goals under a pain/leak question.
+
+## New Finding
+
+- Step 2 now has a content-framing mismatch: the page title and introduction ask sales to select recognisable performance leaks, but the compact tile titles are framed as goals or outcomes. This can make the diagnosis step feel conceptually inconsistent even if the compact-card layout direction remains approved.
+
+## Duplicate Handling
+
+- This is duplicate-supporting evidence for DQB-003, completed compact-card work and completed sales-conversation framing because those already cover pain-first copy, Step 2 simplification and Sales Conversation Builder framing.
+- It is not a duplicate of DQB-021. DQB-021 is a layout behaviour defect where neighbouring cards visually expand; this new feedback is a wording/content-framing defect.
+- The screenshot is supporting evidence for the same 2026-07-10 wording feedback, not a separate backlog item.
+
+## Phase 1 Impact
+
+- Impacted: yes. This affects the approved Phase 1 requirement that the flow should lead from pain points and performance leaks before translating them into KPI fit, ROI and solution direction.
+- No impact on pricing formulas, ROI formulas, Odoo/API payload logic, country metadata, app/repo naming, or product structure.
+- Suggested decision before coding: choose whether Step 2 compact card titles should be written as pains/leaks, as goals/outcomes, or as paired pain-to-outcome labels where the pain is primary and the goal is secondary.
+
+# Delta Triage Addendum - 2026-07-15 Anna Interface, Content, ROI And Export Feedback
+
+Status: processed as new feedback since the last triage. No application code was changed.
+
+## New Source
+
+- `FB-ANNA-1507`: `feedback/inbox/feedback-anna-2026-07-15-interface-content-roi-export.md:1-119`. Direct evidence from Anna covering smaller-screen overlap, compressed dark-box text, empty white scroll space, AI-style icons, Step 2 scrolling and navigation gating, segment/input changes, problem-card wording, Live Scan Summary clutter, Page 3 insight wording, Page 4 ROI layout, German translation, and print/email follow-up.
+
+## New Findings
+
+### 1. Responsive layout and visual containment need explicit Phase 1 QA
+
+Direct evidence:
+- Anna reports overlapping elements on smaller screens and multi-device setups, compressed dark-box text, empty white space while scrolling, and asks for proper screen-size/mobile testing. Source: FB-ANNA-1507 at `feedback/inbox/feedback-anna-2026-07-15-interface-content-roi-export.md:11-17`.
+
+Duplicate status:
+- Partly overlaps DQB-010 and DQB-021, but those are narrower layout defects. This feedback adds a broader responsive QA requirement across the guided flow.
+
+Phase 1 impact:
+- Impacted. Responsive trust and readability are part of the approved "better UX" Phase 1 scope.
+
+### 2. Step 2 simplification and customer-language card wording are reinforced
+
+Direct evidence:
+- Anna says Page 2 has too much scrolling and should show only problem-card headlines first, with detail behind expanders or info hover. Source: FB-ANNA-1507 at `feedback/inbox/feedback-anna-2026-07-15-interface-content-roi-export.md:17`.
+- Anna says the cards should sound like customer language, not feature mapping, and should ask which problems the customer recognises from daily business. Source: FB-ANNA-1507 at `feedback/inbox/feedback-anna-2026-07-15-interface-content-roi-export.md:33-51`.
+
+Duplicate status:
+- Duplicate-supporting evidence for DQB-003, completed compact-card work, completed sales-conversation framing and DQB-022. It strengthens the pain-first wording decision but does not require another separate Step 2 copy item.
+
+Phase 1 impact:
+- Impacted. This directly affects the approved compact Step 2 cards and pain-first Sales Conversation Builder framing.
+
+### 3. Top navigation should respect required earlier-step inputs
+
+Direct evidence:
+- Anna says the top navigation should not be freely clickable if required information from earlier steps is still missing; a greyed-out state or short message would guide users more clearly. Source: FB-ANNA-1507 at `feedback/inbox/feedback-anna-2026-07-15-interface-content-roi-export.md:17`.
+
+Duplicate status:
+- New. Existing backlog covers step layout and copy, but not step gating or validation navigation behaviour.
+
+Phase 1 impact:
+- Impacted if required intake fields are introduced in Phase 1. This affects guided-flow reliability, not pricing or payload logic.
+
+### 4. Context inputs need segment refinement and retail physical-context fields
+
+Direct evidence:
+- Anna questions whether Footwear should be part of Fashion, asks to add Books & Toys and possibly Beauty & Wellness, and asks for Retail number of entrances and multiple-floor context. Source: FB-ANNA-1507 at `feedback/inbox/feedback-anna-2026-07-15-interface-content-roi-export.md:21-27`.
+
+Duplicate status:
+- Partly overlaps DQB-011 because it concerns segment/input flexibility, but the requested segment taxonomy and physical retail fields are more specific.
+
+Phase 1 impact:
+- Impacted. This fits the Phase 1 "better intake" scope and supports more accurate diagnosis before quote-ready handoff.
+
+### 5. Event may need a separate future customer type
+
+Direct evidence:
+- Anna suggests adding Event as a third option because it is similar to Shopping Centre but has its own complexity and more requests are coming. Source: FB-ANNA-1507 at `feedback/inbox/feedback-anna-2026-07-15-interface-content-roi-export.md:25`.
+
+Duplicate status:
+- New, but likely outside current Phase 1. It resembles Shopping Centre extension work but would add a new flow category.
+
+Phase 1 impact:
+- Not recommended for Phase 1 unless separately approved. Existing approved Phase 1 says do not split the app or create a new product; Event can remain a future customer-type investigation inside the same product.
+
+### 6. Live Scan Summary needs clearer information architecture
+
+Direct evidence:
+- Anna likes the Live Scan idea but says it becomes cluttered when several topics are selected, the selected topics pile up, the label combination is repetitive, icons feel too playful, and it should show either selected problems or potential solutions, not a mix. Source: FB-ANNA-1507 at `feedback/inbox/feedback-anna-2026-07-15-interface-content-roi-export.md:55-69`.
+- Anna says "Realistic Gain €0" should not be shown before enough ROI inputs exist; instead, show "Potential will be calculated in the next step." Source: FB-ANNA-1507 at `feedback/inbox/feedback-anna-2026-07-15-interface-content-roi-export.md:65-69`.
+
+Duplicate status:
+- Partly overlaps DQB-017 for icon tone, but the Live Scan summary structure, label, selected-item density and pre-ROI value state are new.
+
+Phase 1 impact:
+- Impacted. The live summary is part of the guided sales experience and affects trust before the ROI step.
+
+### 7. Page 3 should answer with concrete PFM insights, not continue questioning the customer
+
+Direct evidence:
+- Anna says the Page 3 sentence feels unnatural and expects Page 3 to show more solutions and answers. Questions like "Do you know how many visitors are needed for today's revenue?" do not match the promise of Insights. Source: FB-ANNA-1507 at `feedback/inbox/feedback-anna-2026-07-15-interface-content-roi-export.md:73-83`.
+
+Duplicate status:
+- Partly overlaps DQB-003 and completed commercial summary because it is content and business-value framing, but the Page 3 insight-level behaviour is specific enough for separate tracking.
+
+Phase 1 impact:
+- Impacted. It affects the transition from diagnosis to solution/value fit.
+
+### 8. Page 4 ROI layout, assumption clarity and result emphasis need attention
+
+Direct evidence:
+- Anna reports graphic boxes overlapping ROI controls on Mac/second-screen, preventing proper ROI testing. Source: FB-ANNA-1507 at `feedback/inbox/feedback-anna-2026-07-15-interface-content-roi-export.md:87`.
+- Anna says Extended Scope and Pricing Assumptions repeats numbers, columns should expand more horizontally than vertically, abbreviations and assumptions need an info box, and Realistic Gain should be visually highlighted more clearly. Source: FB-ANNA-1507 at `feedback/inbox/feedback-anna-2026-07-15-interface-content-roi-export.md:89-93`.
+
+Duplicate status:
+- Partly overlaps DQB-002 and DQB-010, but adds specific ROI testing blockers, duplicate-number cleanup, abbreviation help and result-state emphasis.
+
+Phase 1 impact:
+- Impacted. This affects trust in the ROI model and whether users can test the calculation at all.
+
+### 9. German translation needs full professional review
+
+Direct evidence:
+- Anna says German should be reviewed in full because some formulations feel AI-generated and not natural enough for professional customer conversation, especially headlines, problem cards, buttons and ROI explanations. Source: FB-ANNA-1507 at `feedback/inbox/feedback-anna-2026-07-15-interface-content-roi-export.md:97-99`.
+
+Duplicate status:
+- Direct duplicate-supporting evidence for DQB-004.
+
+Phase 1 impact:
+- Impacted if German is part of the Phase 1 rendered verification set. Existing approved Phase 1 explicitly asks rendered EN/NL/DE/FR copy verification.
+
+### 10. Final export/follow-up needs print/email and CRM consent decisions
+
+Direct evidence:
+- Anna asks for final-page print in PFM CI or email delivery, with consent wording that the email address may be stored in CRM and PFM may follow up. Source: FB-ANNA-1507 at `feedback/inbox/feedback-anna-2026-07-15-interface-content-roi-export.md:103-105`.
+
+Duplicate status:
+- Partly overlaps DQB-020 on CRM/lead nurturing, but print/export and consent wording are concrete handoff requirements not yet separately tracked.
+
+Phase 1 impact:
+- Possibly impacted, but email delivery and CRM storage require privacy/workflow decisions before implementation. Print/PFM-CI export may be a nearer-term Phase 1 or post-Phase 1 deliverable depending on scope.
+
+## Duplicate Handling Summary
+
+- Duplicate-supporting: Step 2 compact headline/detail pattern strengthens completed compact-card work; customer-language problem cards strengthen DQB-003, completed sales-conversation framing and DQB-022; German review strengthens DQB-004; icon professionalism strengthens DQB-017; CRM follow-up strengthens DQB-020.
+- New or specific enough to track: responsive/multi-device QA, navigation gating, segment taxonomy plus retail physical-context fields, Event as a future customer type, Live Scan Summary information architecture, Page 3 answer-oriented insight level, ROI layout/assumption clarity, and final export/consent workflow.
+
+## Stakeholder Decision Update - 2026-07-15
+
+Direct decisions received after triage:
+
+- The current Phase 1 demo must support 1366 x 768. Full phone support is not needed now. This narrows completed 1366 x 768 desktop QA without dismissing the reported layout defects.
+- Every field is mandatory before a user may progress. This resolves the gating direction for completed navigation gating.
+- The attached screenshots are the approved segment-taxonomy source for completed retail intake taxonomy. They retain Footwear as its own segment, list Toys & Games separately from Books, Music & Media, and include Cosmetics & Beauty Retail and Hair & Beauty Salons. Retail entrances and multiple floors are optional fields.
+- Event is not being considered now. DQB-023 is deferred, not closed.
+- Live Scan Summary rework is not relevant for the current pass. DQB-024 is deferred, not closed.
+- Page 3 should show covered KPIs. This resolves the primary content direction for completed Page 3 KPI display.
+- ROI gain/result styling must remain brand-neutral; green/red is not approved. This resolves the styling direction for DQB-025.
+- The final handoff work must include a CRM consent specification. This partially resolves DQB-026.
+
+Source register addition:
+
+- `FB-1507-SEGMENT-SCREENS`: stakeholder screenshots supplied 2026-07-15: `/Users/krystofgogela/Downloads/Scherm_afbeelding 2026-07-15 om 14.30.37.png`, `/Users/krystofgogela/Downloads/Scherm_afbeelding 2026-07-15 om 14.30.45.png`, `/Users/krystofgogela/Downloads/Scherm_afbeelding 2026-07-15 om 14.30.58.png`, and `/Users/krystofgogela/Downloads/Scherm_afbeelding 2026-07-15 om 14.31.05.png`. Visual evidence only; not copied into the repository.
+
+Open feedback retained for follow-up:
+
+- The attached retail segments and optional physical-context fields have been implemented from the available screenshots. Any future taxonomy expansion requires a complete source list.
+- DQB-025 still needs a reviewed list of ROI abbreviations and assumptions requiring explanatory help.
+- DQB-026 still needs the final Phase 1 delivery choice (printable export, email delivery, or both) and CRM/privacy-owner approval of consent wording, storage purpose, legal basis, retention and withdrawal handling.
+
+# Delta Triage Addendum - 2026-07-21 Odoo Payload, Validation And Package Mapping
+
+Status: processed as new feedback since the last triage. No application code was changed.
+
+## New Findings
+
+### 1. Odoo needs a deliberate outbound contract rather than the current all-purpose export
+
+Direct evidence:
+- The feedback asks Odoo to receive only company, contact, quote, package, sensors, template, country, pricelist and operating-unit data, keeping ROI, marketing and sales-context data internal. It also requires all backend labels, IDs and Odoo data to remain English while the UI remains multilingual. Source: FB-2107-ODOO-INTEGRATION at `feedback/inbox/2026-07-21.md:5-6`.
+- The local app currently builds a broad client-side JSON export with `customer_visible`, `lead`, `scenario`, `results` and `pfm_internal` sections, and its only submission action downloads that JSON. Source: APP-HTML at `index.html:2607-2791`, `index.html:3426-3432`.
+
+Duplicate status:
+- Partly duplicates DQB-018, DQB-013 and DQB-016, but the outbound schema boundary and locale-independent IDs are specific enough for separate tracking.
+
+Phase 1 impact:
+- Impacted only if the Phase 1 deliverable is extended from local indicative output to a real Odoo/webhook handoff. This exceeds the approved Phase 1 exclusion of live Odoo pricing integration and needs an explicit scope decision.
+
+### 2. Country, currency, pricelist and template mapping is a concrete integration requirement
+
+Direct evidence:
+- The feedback requires country mapping to the correct Odoo entity, currency, pricelist and quotation template, with Netherlands and UK scenarios tested. Source: FB-2107-ODOO-INTEGRATION at `feedback/inbox/2026-07-21.md:9`.
+- The current app records country as metadata, holds operating-unit/template IDs locally, and hardcodes EUR in the payload. Source: APP-HTML at `index.html:1128-1153`, `index.html:2703`; APP-PRICING at `pricing-config.js:1-16`.
+
+Duplicate status:
+- Strengthens completed country metadata and DQB-018. It is not a duplicate because it specifies the commercial mapping keys and minimum Netherlands/UK acceptance scenarios.
+
+Phase 1 impact:
+- Impacted if quote generation is introduced. The current Phase 1 decision allows country capture only as metadata and keeps live Odoo pricing out of scope, so a revised decision is required before implementation.
+
+### 3. Package and sensor selection need an auditable mapping, not feature-led manual configuration
+
+Direct evidence:
+- The feedback asks for Essentials, Professional and Enterprise package logic driven by selected pains/features; technical inputs such as store entrances should be hidden or automated; and an explicit scenario-to-package-to-sensors-to-Odoo-products-to-pricelist-to-template mapping should cover retail chains, shopping centres and Enterprise/in-store analytics. Source: FB-2107-ODOO-INTEGRATION at `feedback/inbox/2026-07-21.md:11-23`.
+- The current app has package recommendations, solution-component calculations and local indicative sensor assumptions, including a static `amount_of_sensors` value based on locations rather than calculated solution scope. Source: APP-HTML at `index.html:2341-2515`, `index.html:2661`; APP-PRICING at `pricing-config.js:19-82`.
+
+Duplicate status:
+- Partly duplicates completed package interaction, completed commercial summary and DQB-018, but the requested mapping contract and removal of technical inputs are new implementation requirements.
+
+Phase 1 impact:
+- The local package recommendation work is impacted. Odoo product/pricelist/template mapping and any hardcoded-price replacement require commercial and integration approval before coding.
+
+### 4. The requested validation rules conflict with an existing stakeholder decision
+
+Direct evidence:
+- The feedback defines company name, contact name, contact email and country as required, while contact role should be optional. Source: FB-2107-ODOO-INTEGRATION at `feedback/inbox/2026-07-21.md:7`.
+- The 2026-07-15 stakeholder decision states that every field is mandatory before progression. Source: `feedback/triage/feedback-summary.md`, "Stakeholder Decision Update - 2026-07-15"; `feedback/triage/backlog.md`, "Stakeholder Decisions - 2026-07-15".
+
+Duplicate status:
+- Directly related to completed navigation gating, not a separate validation backlog item.
+
+Phase 1 impact:
+- Resolved on 2026-07-22. Contact role remains mandatory before progression, so no change to completed navigation gating is required.
+
+## Duplicate Handling Summary
+
+- DQB-018 is strengthened by the explicit requirement for Odoo-owned products, templates and pricing.
+- completed country metadata is strengthened by country-to-entity/currency/pricelist/template mapping and Netherlands/UK tests.
+- completed package interaction is strengthened by automatic package recommendation, but it does not cover the new Odoo mapping contract.
+- completed navigation gating had conflicting validation evidence. It is resolved: contact role remains mandatory before progression.
+- The request to inspect hardcoded pricing, assumptions and sensor calculations is supporting evidence for DQB-016 and the new mapping work, not a separate product feature.
+
+## Open Decisions Raised On 2026-07-21
+
+- Decide whether the first visible delivery may include a real Generate Quote webhook/Odoo handoff. If yes, approve a bounded integration slice; if no, retain JSON export/local review only.
+- Provide the authoritative Odoo mapping for Netherlands and UK: company/entity, currency, pricelist ID, template ID, operating-unit ID, Odoo product IDs and whether hardware/subscriptions require one or two linked quotations.
+- Confirm the outbound payload schema, including fields allowed to leave the browser, stable English field names/IDs, and which ROI/marketing/sales-context values must remain internal.
+- Approve the scenario-to-package-to-sensor-to-product mapping and the authoritative Odoo pricelist source before changing any local pricing or sensor logic.
