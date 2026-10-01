@@ -33,9 +33,11 @@ function extractFunction(name) {
 
 vm.runInContext([
   "const PRICING = window.PFM_PRICING;",
+  "const ODOO_MAPPING_ENV = 'test';",
   "const state = globalThis.state;",
   "const ceilQuantity = value => Math.ceil(Number(value));",
   extractFunction("distributeLocationUnits"),
+  extractFunction("odooIsarsoftServerProduct"),
   extractFunction("resolveIsarsoftServer"),
   extractFunction("resolveIsarsoftServers"),
   extractFunction("processingUnitResolution"),
@@ -94,7 +96,7 @@ assert.equal(templateRecord("NL", "retailChain", "opex", "instore_lidar")?.build
 assert.equal(templateRecord("NL", "retailChain", "opex", "instore_3d")?.builderConfig, "NL_QB_Enterprise_Retail_Package_Addon-Xovis");
 assert.equal(templateRecord("UK", "retailChain", "opex", "instore_lidar")?.builderConfig, "UK_QB_Enterprise_Retail_Package_Addon-LiDAR");
 assert.equal(templateRecord("UK", "retailChain", "opex", "instore_3d")?.builderConfig, "UK_QB_Enterprise_Retail_Package_Addon-Xovis");
-assert.equal(context.window.PFM_PRICING.odooTemplateCatalogByEntity.DE.retailChain.capex.tpl_rc_footfall_essential_isarsoft, undefined);
+assert.equal(context.window.PFM_PRICING.odooTemplateCatalogByEntity.DE.retailChain.capex.tpl_rc_footfall_essential_isarsoft.productionId, 688);
 assert.equal(context.window.PFM_PRICING.odooTemplateCatalogByEntity.UK.retailProperty.capex.tpl_rp_footfall_essential_premium, undefined);
 
 for (const [entity, ids] of [["NL", [18530, 18531, 18532, 18533]], ["UK", [18521, 18522, 18523, 18524]]]) {

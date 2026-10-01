@@ -1580,15 +1580,19 @@
     </main>
   </div>
 
-  <script src="pricing-config.js?v=20260831-1"></script>
+  <script src="pricing-config.js?v=20260924-1"></script>
   <script>
     const PRICING = window.PFM_PRICING || {};
+    const ODOO_MAPPING_ENV = window.PFM_ODOO_MAPPING_ENV === "test" ? "test" : "production";
+    // Legacy payload fields named *_test_id are still read by n8n; emit the
+    // active-environment ID there as well as in the unambiguous ID fields.
+    const odooTemplateId = record => record?.[ODOO_MAPPING_ENV === "production" ? "productionId" : "testId"] || null;
     const RETAIL_PRICING = PRICING.retail || {};
     const ROUTE_PACKAGES = PRICING.routePackages || {};
     const SHOPPING_CENTRE_PRICING = PRICING.shoppingCentre || {};
     const RETAIL_PROPERTY_PACKAGE_MINIMUMS = PRICING.retailPropertyPackageMinimums || {};
     const TIER_RANK = { essential: 1, professional: 2, enterprise: 3 };
-    const QUOTE_WEBHOOK_URL = "https://n8n.pfm-intelligence.com/webhook-test/c85c2167-6d8e-48f5-9467-816ec9274cdd";
+    const QUOTE_WEBHOOK_URL = "https://n8n.pfm-intelligence.com/webhook/2c2b23b8-e270-4e8d-ac42-c49ea76185a6";
 
     const CUSTOMER_TYPE_TO_OPERATING_UNIT = { "Retail Chain": "Shops", "Shopping Centre": "Shopping Centres" };
     const SALESPERSON_ROUTING = PRICING.odooSalespersonRouting || {};
@@ -1613,12 +1617,12 @@
       opportunityType: "Premium",
       values: {
         clientName: "",
-        preparedBy: "Anna Reilander",
+        preparedBy: "Anna Reiländer",
         contactName: "",
         contactEmail: "",
         contactRole: "",
         crmConsent: false,
-        country: "NL",
+        country: "DE",
         segment: "Footwear",
         segmentOther: "",
         locations: 50,
@@ -2891,6 +2895,14 @@
     }
     function salespersonRouting(name = state.values.preparedBy) { return resolveOdooRouting(name); }
     function salespersonId() { return salespersonRouting().userId; }
+    function setCountryDefaultForSalesperson(name = state.values.preparedBy) {
+      const entityKey = SALESPERSON_ROUTING[name]?.entityKey;
+      if (!countryOptions.some(option => option.value === entityKey)) return false;
+      state.values.country = entityKey;
+      const countryField = document.getElementById("country");
+      if (countryField) countryField.value = entityKey;
+      return true;
+    }
     function unitCount() { return state.customerType === "Retail Chain" ? Number(state.values.locations || 1) : Number(state.values.entrances || 1); }
 
     function canonicalPackageKey(id) {
@@ -2977,6 +2989,34 @@
       return (tiers || []).find(tier => count >= tier.min && (tier.max === null || count <= tier.max))?.discount || 0;
     }
 
+    function sensorVolumeTier(count) {
+      if (count >= 100) return "100+";
+      if (count >= 30) return "30-99";
+      if (count >= 10) return "10-29";
+      if (count >= 1) return "1-9";
+      return null;
+    }
+
+    function contractPackageRate(segment, technology, packageKey, termYears, billableSensors) {
+      const pricing = PRICING.contractPackagePricing?.[segment]?.[technology]?.[Number(termYears)];
+      const tier = sensorVolumeTier(Number(billableSensors));
+      const rate = pricing?.[packageKey]?.[tier];
+      return Number.isFinite(Number(rate)) ? Number(rate) : null;
+    }
+
+    function ipCameraPricing(segment, cameraCount) {
+      const numericCount = Number(cameraCount);
+      const totalCameras = Number.isFinite(numericCount) ? Math.max(0, numericCount) : 0;
+      const tiers = PRICING.reId?.ipCameraCapexPricing?.[segment] || [];
+      const tier = tiers.find(candidate => totalCameras >= candidate.minCameras && (candidate.maxCameras === null || totalCameras <= candidate.maxCameras));
+      const fallback = Number(PRICING.reId?.ipCameraCapex || PRICING.components?.REID_IP?.capex || 0);
+      return {
+        cameraCount: totalCameras,
+        tier: tier?.tier || null,
+        unitPrice: Number.isFinite(Number(tier?.unitPrice)) ? Number(tier.unitPrice) : fallback
+      };
+    }
+
     function getSetupCost(countryId, segment, technology) {
       const override = PRICING.countryOverrides?.[countryId]?.overrides?.sensorSetup?.[segment]?.[technology];
       if (override) return technology === "3D" ? override.totalPerSensor : override.totalPerCamera;
@@ -2994,6 +3034,12 @@
       return server ? { ...server, setupCost: PRICING.serverCatalog?.setupCostPerServer || 0, monitoringYearly: PRICING.serverCatalog?.serverMonitoringYearly || 0 } : { flagReview: true, reason: "No server with sufficient capacity" };
     }
 
+    function odooIsarsoftServerProduct(profile, entityKey) {
+      return ODOO_MAPPING_ENV === "production"
+        ? PRICING.odooProductionArticlesByEntity?.[entityKey]?.isarsoft_servers?.[profile.profile_key] || null
+        : profile.odoo_products?.[entityKey] || null;
+    }
+
     function resolveIsarsoftServer(segment, cameraCount, entityKey) {
       const profiles = PRICING.isarsoftServerProfiles?.[segment] || [];
       const requiredChannels = Number(cameraCount);
@@ -3003,12 +3049,13 @@
       if (index < 0) return { flagReview: true, mappingComplete: false, reason: "Insufficient server capacity", cameraCount };
       const profile = profiles[index];
       const catalogue = PRICING.serverCatalog?.[segment]?.[index] || {};
-      const product = profile.odoo_products?.[entityKey];
+      const product = odooIsarsoftServerProduct(profile, entityKey);
       const productId = typeof product === "object" ? product?.odoo_product_id ?? null : product ?? null;
       const productTemplateId = typeof product === "object" ? product?.odoo_product_template_id ?? null : null;
+      const articleId = typeof product === "object" ? product?.odoo_article_id ?? null : null;
       const internalReference = typeof product === "object" ? product?.internal_reference || null : null;
       const productName = typeof product === "object" ? product?.name || null : null;
-      return { ...profile, sku: catalogue.sku || null, name: productName || catalogue.name || profile.profile_key, capex: Number(catalogue.capex || 0), setupCost: Number(PRICING.serverCatalog?.setupCostPerServer || 0), odoo_product_id: productId, odoo_product_template_id: productTemplateId, internal_reference: internalReference, mappingComplete: Number.isInteger(productId) && productId > 0, selected_profile_is_smallest_sufficient: true, cameraCount };
+      return { ...profile, sku: catalogue.sku || null, name: productName || catalogue.name || profile.profile_key, capex: Number(catalogue.capex || 0), setupCost: Number(PRICING.serverCatalog?.setupCostPerServer || 0), odoo_product_id: productId, odoo_product_template_id: productTemplateId, odoo_article_id: articleId, internal_reference: internalReference, mappingComplete: Number.isInteger(productId) && productId > 0, selected_profile_is_smallest_sufficient: true, cameraCount };
     }
 
     function distributeLocationUnits(totalUnits, locationCount) {
@@ -3053,9 +3100,11 @@
       const xovisUnsupported = isXovis && count > 350;
       const quantity = isLidar ? Math.ceil(count / 4) : count >= 10 && count <= 350 ? 1 : 0;
       const key = isLidar ? "lidar_processing_unit" : "xovis_processing_unit";
-      const product = PRICING.processingUnitProducts?.[key]?.[entityKey] || {};
+      const product = ODOO_MAPPING_ENV === "production"
+        ? PRICING.odooProductionArticlesByEntity?.[entityKey]?.[key] || {}
+        : PRICING.processingUnitProducts?.[key]?.[entityKey] || {};
       const productId = product.odoo_product_id ?? null;
-      return { required: quantity > 0, quantity, product_id: productId, internal_reference: product.internal_reference || null, technology_id: technologyId, mappingComplete: !xovisUnsupported && (quantity === 0 || (Number.isInteger(productId) && productId > 0)), flagReview: xovisUnsupported, reason: xovisUnsupported ? "Xovis processing-unit scope supports at most 350 sensors" : null, source: "builder_configuration" };
+      return { required: quantity > 0, quantity, product_id: productId, odoo_article_id: product.odoo_article_id ?? null, internal_reference: product.internal_reference || null, technology_id: technologyId, mappingComplete: !xovisUnsupported && (quantity === 0 || (Number.isInteger(productId) && productId > 0)), flagReview: xovisUnsupported, reason: xovisUnsupported ? "Xovis processing-unit scope supports at most 350 sensors" : null, source: "builder_configuration" };
     }
 
     function getEntranceSensor(solutionPackage, userToggle) {
@@ -3133,6 +3182,12 @@
     }
 
     function selectOdooPriceLists(entityKey, segment, sensorCount) {
+      if (ODOO_MAPPING_ENV === "production") {
+        const lists = PRICING.odooProductionPriceListsByEntity?.[entityKey]?.[segment];
+        if (!lists) return null;
+        const tier = sensorCount < 10 ? "tier0" : sensorCount < 30 ? "tier1" : sensorCount < 100 ? "tier2" : "tier3";
+        return { entityKey, tier, sensorCount, capex: lists.capex, opex: lists.opex, fullOpex: lists.fullOpex };
+      }
       const entityTiers = PRICING.odooPriceListsByEntity?.[entityKey]?.test?.[segment];
       const legacyTiers = entityKey === "NL" ? PRICING.odooPriceLists?.test?.[segment] : null;
       const tiers = entityTiers || legacyTiers || [];
@@ -3157,15 +3212,20 @@
       const tier = recommendedPackageKey();
       const segment = "retailChain";
       const capexDiscount = getDiscount(stores, PRICING.volumeDiscount?.[segment]?.capex?.tiers);
-      const opexDiscount = getDiscount(stores, PRICING.volumeDiscount?.[segment]?.opex?.tiers);
-      const monthlyRate = Number(PRICING.packagePricing?.[segment]?.["3D"]?.[tier] || 0) * (1 - opexDiscount);
       const isarsoftActive = state.values.entranceSensorType === "isarsoft";
       const entranceTechnology = isarsoftActive ? "IP" : "3D";
       const setupPerSensor = getSetupCost(state.values.country, segment, entranceTechnology);
       const entrance = getEntranceSensor(tier, state.values.entranceSensorType);
       const entranceSensors = ceilQuantity(stores * Number(RETAIL_PRICING.entrancePerformance?.multiEntranceFactor || 1));
+      const entranceCameraPricing = isarsoftActive ? ipCameraPricing(segment, entranceSensors) : null;
+      const entranceCapexUnitPrice = entranceCameraPricing?.unitPrice ?? Number(entrance.capexPerSensor || 0);
+      const entranceCapexDiscount = isarsoftActive ? 0 : capexDiscount;
+      const configuredMonthlyRate = contractPackageRate(segment, entranceTechnology, tier, years, entranceSensors);
+      const legacyMonthlyRate = Number(PRICING.packagePricing?.[segment]?.[entranceTechnology]?.[tier] || 0)
+        * (1 - getDiscount(stores, PRICING.volumeDiscount?.[segment]?.opex?.tiers));
+      const monthlyRate = configuredMonthlyRate == null ? legacyMonthlyRate : configuredMonthlyRate;
       const cameraCount = isarsoftActive && state.values.retailIsarsoftExistingNetwork ? 0 : entranceSensors;
-      const entranceHardware = cameraCount * Number(entrance.capexPerSensor || 0) * (1 - capexDiscount);
+      const entranceHardware = cameraCount * entranceCapexUnitPrice * (1 - entranceCapexDiscount);
       const entranceSetup = entranceSensors * setupPerSensor;
       const isarsoftServerResolution = isarsoftActive
         ? resolveIsarsoftServers(segment, entranceSensors, stores, salespersonRouting().entityKey)
@@ -3189,8 +3249,8 @@
         : (instoreSensors >= serverThreshold && instoreSensors <= serverMaxSensors ? 1 : 0);
       const instoreHardware = instoreSensors * Number(instoreTech.capexPerSensorAllIn || 0) + (instoreTech.serverCapexIncludedInSensorPrice ? 0 : instoreServers * Number(instoreTech.serverCapex || 0));
       const components = [
-        { component_key: "entrance_performance", component_label: "Entrance Performance Layer", active: true, stores_in_scope: stores, units: entranceSensors, billable_units: cameraCount, unit_label: isarsoftActive ? "IP camera channels" : "sensors", technology_id: entrance.technologyId, base_capex_per_unit: Number(entrance.capexPerSensor || 0), capex_discount_pct: capexDiscount, net_capex_per_unit: Number(entrance.capexPerSensor || 0) * (1 - capexDiscount), setup_cost_per_unit: setupPerSensor, hardware_capex_total: entranceHardware, setup_capex_total: entranceSetup, capex_total: entranceHardware + entranceSetup, monthly_fee_per_unit: monthlyRate, monthly_fee_total: entranceSensors * monthlyRate, tco_total: entranceHardware + entranceSetup + entranceSensors * monthlyRate * 12 * years, quote_note: "Package pricing includes visitor-profile capabilities; no module add-ons are stacked." },
-        { component_key: "capture_rate", component_label: "Street Potential / Capture Rate Layer", active: captureActive, stores_in_scope: captureStores, units: captureStores, unit_label: "sensors", technology_id: RETAIL_PRICING.captureRate?.technologyId, base_capex_per_unit: Number(RETAIL_PRICING.captureRate?.capexPerSensor || 0), capex_discount_pct: capexDiscount, net_capex_per_unit: Number(RETAIL_PRICING.captureRate?.capexPerSensor || 0) * (1 - capexDiscount), setup_cost_per_unit: setupPerSensor, hardware_capex_total: captureHardware, setup_capex_total: captureSetup, capex_total: captureHardware + captureSetup, monthly_fee_per_unit: monthlyRate, monthly_fee_total: captureStores * monthlyRate, tco_total: captureHardware + captureSetup + captureStores * monthlyRate * 12 * years, quote_note: "Capture sensors use the same package rate and volume discounts." },
+        { component_key: "entrance_performance", component_label: "Entrance Performance Layer", active: true, stores_in_scope: stores, units: entranceSensors, billable_units: cameraCount, unit_label: isarsoftActive ? "IP camera channels" : "sensors", technology_id: entrance.technologyId, base_capex_per_unit: entranceCapexUnitPrice, capex_discount_pct: entranceCapexDiscount, net_capex_per_unit: entranceCapexUnitPrice * (1 - entranceCapexDiscount), camera_volume_tier: entranceCameraPricing?.tier || null, camera_count_in_scope: entranceCameraPricing?.cameraCount ?? null, setup_cost_per_unit: setupPerSensor, hardware_capex_total: entranceHardware, setup_capex_total: entranceSetup, capex_total: entranceHardware + entranceSetup, monthly_fee_per_unit: monthlyRate, monthly_fee_total: entranceSensors * monthlyRate, tco_total: entranceHardware + entranceSetup + entranceSensors * monthlyRate * 12 * years, quote_note: "Package pricing is per billable sensor and includes visitor-profile capabilities; no module add-ons are stacked." },
+        { component_key: "capture_rate", component_label: "Street Potential / Capture Rate Layer", active: captureActive, stores_in_scope: captureStores, units: captureStores, unit_label: "sensors", technology_id: RETAIL_PRICING.captureRate?.technologyId, base_capex_per_unit: Number(RETAIL_PRICING.captureRate?.capexPerSensor || 0), capex_discount_pct: capexDiscount, net_capex_per_unit: Number(RETAIL_PRICING.captureRate?.capexPerSensor || 0) * (1 - capexDiscount), setup_cost_per_unit: setupPerSensor, hardware_capex_total: captureHardware, setup_capex_total: captureSetup, capex_total: captureHardware + captureSetup, monthly_fee_per_unit: monthlyRate, monthly_fee_total: captureStores * monthlyRate, tco_total: captureHardware + captureSetup + captureStores * monthlyRate * 12 * years, quote_note: "Capture sensors use the same direct package rate per billable sensor." },
         { component_key: "instore_journey", component_label: "In-store Journey Layer", active: instoreActive, stores_in_scope: instoreStores, average_store_sqm: Number(state.values.avgStoreSqm || 0), sensors_per_store: instoreSensorsPerStore, units: instoreSensors, unit_label: "sensors", technology_id: instoreTech.technologyId, servers: instoreServers, capex_total: instoreHardware, monthly_fee_per_unit: Number(instoreTech.monthlyPerSensor || 0), monthly_fee_total: instoreSensors * Number(instoreTech.monthlyPerSensor || 0), tco_total: instoreHardware + instoreSensors * Number(instoreTech.monthlyPerSensor || 0) * 12 * years, quote_note: "Indicative in-store analytics scope; technical review remains required." }
       ];
       if (isarsoftActive) components.push({ component_key: "isarsoft_server", component_label: "Isarsoft analytics server", active: true, units: (isarsoftServerResolution?.products || []).reduce((sum, server) => sum + Number(server.quantity || 0), 0), unit_label: "server", technology_id: "ISARSOFT_SERVER", base_capex_per_unit: isarsoftServer?.capex || null, capex_discount_pct: 0, net_capex_per_unit: isarsoftServer?.capex || null, hardware_capex_total: isarsoftServerCapex, setup_cost_per_unit: Number(PRICING.serverCatalog?.setupCostPerServer || 0), setup_capex_total: isarsoftServerSetup, capex_total: isarsoftServerCapex + isarsoftServerSetup, monthly_fee_per_unit: 0, monthly_fee_total: 0, tco_total: isarsoftServerCapex + isarsoftServerSetup, server_profiles: isarsoftServerResolution, mapping_complete: Boolean(isarsoftServerResolution?.mappingComplete), quote_note: "Server sized per physical location to the selected Isarsoft entrance channels; technical review remains required." });
@@ -3427,7 +3487,7 @@
       const entranceSensor = getEntranceSensor(solutionPackage, state.values.entranceSensorType);
       const odooTemplate = selectOdooTemplate(pricingSegment, configurationId, solutionPackage, entranceSensor.type);
       const baseTemplateRecord = odooTemplateRecord(odooEntityKey, pricingSegment, "capex", odooTemplate.baseTemplate);
-      const templateId = baseTemplateRecord?.testId || null;
+      const templateId = odooTemplateId(baseTemplateRecord);
       const instoreComponent = active.find(component => component.component_key === "instore_journey") || null;
       const isarsoftComponent = active.find(component => component.component_key === "isarsoft_server") || null;
       const commercialSensorCount = pricingSegment === "retailProperty"
@@ -3437,6 +3497,10 @@
         ? retailPropertyCommercialSnapshot(solutionPackage)
         : null;
       const retailChainIsarsoft = pricingSegment === "retailChain" && state.values.entranceSensorType === "isarsoft";
+      const isarsoftCameraCount = retailChainIsarsoft
+        ? Number(entranceComponent.units || 0)
+        : Number(propertySnapshot?.reidCameras || 0);
+      const isarsoftCameraPricing = ipCameraPricing(pricingSegment, isarsoftCameraCount);
       const isarsoftMode = retailChainIsarsoft
         ? "base"
         : propertySnapshot?.reidCameras > 0
@@ -3467,12 +3531,12 @@
       const fullOpexTemplates = odooFullOpexTemplateSet(odooEntityKey, pricingSegment, fullOpex.sensorType, solutionPackage);
       const fullOpexPriceList = fullOpex.priceList || odooPriceLists?.fullOpex?.[fullOpexTemplates.vendorKey] || null;
       const fullOpexAsPrimary = state.commercialModel === "full_opex";
-      const capexOpexFallbackTemplate = !fullOpexAsPrimary && !templateId && reidCapexRecord?.testId
+      const capexOpexFallbackTemplate = !fullOpexAsPrimary && !templateId && odooTemplateId(reidCapexRecord)
         ? reidCapexRecord
         : null;
-      const primaryTemplateId = fullOpexAsPrimary && fullOpexTemplates.capexForOpex?.testId
-        ? fullOpexTemplates.capexForOpex.testId
-        : templateId || capexOpexFallbackTemplate?.testId || null;
+      const primaryTemplateId = fullOpexAsPrimary && odooTemplateId(fullOpexTemplates.capexForOpex)
+        ? odooTemplateId(fullOpexTemplates.capexForOpex)
+        : templateId || odooTemplateId(capexOpexFallbackTemplate);
       const primaryTemplateBuilderConfig = fullOpexAsPrimary && fullOpexTemplates.capexForOpex?.builderConfig
         ? fullOpexTemplates.capexForOpex.builderConfig
         : baseTemplateRecord?.builderConfig || capexOpexFallbackTemplate?.builderConfig || null;
@@ -3522,9 +3586,10 @@
           technology_id: PRICING.reId?.technologyId || "REID_IP",
           role: "reid_camera",
           quantity: propertySnapshot.reidCameras,
-          base_capex_per_unit: Number(PRICING.reId?.ipCameraCapex || 0),
-          capex_discount_pct: propertySnapshot.capexDiscount,
-          net_capex_per_unit: Number(PRICING.reId?.ipCameraCapex || 0) * (1 - propertySnapshot.capexDiscount),
+          base_capex_per_unit: propertySnapshot.reidCameraUnit,
+          capex_discount_pct: 0,
+          net_capex_per_unit: propertySnapshot.reidCameraUnit,
+          camera_volume_tier: propertySnapshot.reidCameraPriceTier,
           total_capex: propertySnapshot.reidCameraHardwareCapex,
           setup_cost_per_unit: getSetupCost(state.values.country, "retailProperty", "3D"),
           total_setup: propertySnapshot.reidCameraSetupCapex,
@@ -3565,7 +3630,7 @@
         base_capex_per_unit: component.base_capex_per_unit || null,
         capex_discount_pct: component.capex_discount_pct || 0,
         net_capex_per_unit: component.net_capex_per_unit || null,
-        total_capex: component.hardware_capex_total || component.capex_total,
+        total_capex: component.hardware_capex_total ?? component.capex_total,
         setup_cost_per_unit: component.setup_cost_per_unit || null,
         total_setup: component.setup_capex_total || 0,
         monthly_rate_per_unit: component.monthly_fee_per_unit || null,
@@ -3573,30 +3638,44 @@
       }))).filter(line => Number(line.quantity || 0) > 0);
       const processingUnitResolutions = (pricingSegment === "retailChain" && instoreComponent ? [processingUnitResolution(instoreComponent.technology_id, Number(instoreComponent.units || 0), odooEntityKey)] : []);
       const processingMappingComplete = processingUnitResolutions.every(item => item.mappingComplete);
-      const isarsoftMappingComplete = isarsoftMode === "none" || Boolean(isarsoftServerResolution?.mappingComplete);
       const serverProfiles = [
         ...(PRICING.isarsoftServerProfiles?.retailChain || []),
         ...(PRICING.isarsoftServerProfiles?.retailProperty || [])
       ];
+      const isarsoftRuleMappingsComplete = serverProfiles.every(profile => {
+        const productId = odooIsarsoftServerProduct(profile, odooEntityKey)?.odoo_product_id;
+        return Number.isInteger(productId) && productId > 0;
+      });
+      const isarsoftMappingComplete = isarsoftMode === "none"
+        || Boolean(isarsoftServerResolution?.mappingComplete && isarsoftRuleMappingsComplete);
       const selectedServerProfiles = isarsoftServerResolution?.products || [];
+      const retailPropertySetupProducts = ODOO_MAPPING_ENV === "production"
+        ? PRICING.odooProductionArticlesByEntity?.[odooEntityKey]?.retail_property_setup || {}
+        : {};
+      const retailPropertySetupQuantityRules = [
+        { product_id: retailPropertySetupProducts.web_reporting?.odoo_product_id, role: "retail_property_web_reporting_setup", action: isRetailProperty ? "set_quantity" : "remove", quantity: isRetailProperty ? 1 : 0, source: "builder_configuration" },
+        { product_id: retailPropertySetupProducts.sensor_setup?.odoo_product_id, role: "retail_property_sensor_setup", action: isRetailProperty ? "set_quantity" : "remove", quantity: isRetailProperty ? Number(propertySnapshot?.sensorCount || 0) : 0, source: "builder_configuration" }
+      ].filter(rule => Number.isInteger(rule.product_id) && rule.product_id > 0);
       const odooLineQuantityRules = [
+        ...retailPropertySetupQuantityRules,
         ...processingUnitResolutions.filter(item => item.required && item.mappingComplete).map(item => ({ product_id: item.product_id, role: item.technology_id === "INSTORE_LIDAR" ? "lidar_processing_unit" : "xovis_processing_unit", technology_id: item.technology_id, action: "set_quantity", quantity: item.quantity, source: "builder_configuration" })),
         ...(isarsoftMode !== "none" ? serverProfiles.flatMap(profile => {
-          const product = profile.odoo_products?.[odooEntityKey];
+          const product = odooIsarsoftServerProduct(profile, odooEntityKey);
           const productId = typeof product === "object" ? product?.odoo_product_id : product;
           const productTemplateId = typeof product === "object" ? product?.odoo_product_template_id ?? null : null;
+          const articleId = typeof product === "object" ? product?.odoo_article_id ?? null : null;
           const internalReference = typeof product === "object" ? product?.internal_reference || null : null;
           const selectedServer = selectedServerProfiles.find(server => server.profile_key === profile.profile_key);
           return Number.isInteger(productId) && productId > 0
-            ? [{ product_id: productId, odoo_product_template_id: productTemplateId, internal_reference: internalReference, role: "isarsoft_server", technology_id: "REID_IP", profile_key: profile.profile_key, action: selectedServer ? "set_quantity" : "remove", quantity: selectedServer ? selectedServer.quantity : 0, source: "builder_configuration" }]
+            ? [{ product_id: productId, odoo_product_template_id: productTemplateId, odoo_article_id: articleId, internal_reference: internalReference, role: "isarsoft_server", technology_id: "REID_IP", profile_key: profile.profile_key, action: selectedServer ? "set_quantity" : "remove", quantity: selectedServer ? selectedServer.quantity : 0, source: "builder_configuration" }]
             : [];
         }) : [])
       ];
       const capexTemplateMappingComplete = Boolean(primaryTemplateId);
-      const packageMappingComplete = Boolean(primarySubscriptionTemplate?.testId && primarySubscriptionPriceList?.id);
+      const packageMappingComplete = Boolean(odooTemplateId(primarySubscriptionTemplate) && primarySubscriptionPriceList?.id);
       const baseCommercialMappingComplete = capexTemplateMappingComplete && packageMappingComplete && Boolean(odooPriceLists?.capex?.id);
-      const fullOpexMappingComplete = Boolean(fullOpexTemplates.capexForOpex?.testId && fullOpexTemplates.packageTemplate?.testId && fullOpexPriceList?.id);
-      const isarsoftAddonMappingComplete = isarsoftMode !== "addon" || Boolean(reidCapexRecord?.testId && reidOpexRecord?.testId);
+      const fullOpexMappingComplete = Boolean(odooTemplateId(fullOpexTemplates.capexForOpex) && odooTemplateId(fullOpexTemplates.packageTemplate) && odooPriceLists?.capex?.id && fullOpexPriceList?.id);
+      const isarsoftAddonMappingComplete = isarsoftMode !== "addon" || Boolean(odooTemplateId(reidCapexRecord) && odooTemplateId(reidOpexRecord));
       const requestedModelMappingComplete = state.commercialModel === "full_opex"
         ? fullOpexMappingComplete
         : state.commercialModel === "both"
@@ -3666,12 +3745,12 @@
           commercialModel: "capex_opex",
           quoteRole: "subscription_package",
           componentKey: "base_subscription",
-          templateId: packageOpexRecord?.testId,
+          templateId: odooTemplateId(packageOpexRecord),
           pricelistId: odooPriceLists?.opex?.id,
           quantity: commercialSensorCount,
           quantityRuleScope: ["package_subscription", "subscription_addons"],
           additionalMissing: [
-            !packageOpexRecord?.testId ? "subscription_template_id" : null,
+            !odooTemplateId(packageOpexRecord) ? "subscription_template_id" : null,
             !odooPriceLists?.opex?.id ? "subscription_pricelist_id" : null,
             ...sharedTechnicalMissingMappings
           ]
@@ -3683,11 +3762,11 @@
           commercialModel: "full_opex",
           quoteRole: "investment_base",
           componentKey: "capex_for_opex",
-          templateId: fullOpexTemplates.capexForOpex?.testId,
+          templateId: odooTemplateId(fullOpexTemplates.capexForOpex),
           pricelistId: odooPriceLists?.capex?.id,
           quantityRuleScope: ["installation_setup", "capex_for_opex"],
           additionalMissing: [
-            !fullOpexTemplates.capexForOpex?.testId ? "capex_for_opex_template_id" : null,
+            !odooTemplateId(fullOpexTemplates.capexForOpex) ? "capex_for_opex_template_id" : null,
             !odooPriceLists?.capex?.id ? "capex_pricelist_id" : null,
             ...fullOpexTechnicalMissingMappings
           ]
@@ -3697,12 +3776,12 @@
           commercialModel: "full_opex",
           quoteRole: "subscription_package",
           componentKey: "full_opex_subscription",
-          templateId: fullOpexTemplates.packageTemplate?.testId,
+          templateId: odooTemplateId(fullOpexTemplates.packageTemplate),
           pricelistId: fullOpexPriceList?.id,
           quantity: fullOpex.sensorCount,
           quantityRuleScope: ["hardware_lease", "package_subscription", "subscription_addons"],
           additionalMissing: [
-            !fullOpexTemplates.packageTemplate?.testId ? "package_template_id" : null,
+            !odooTemplateId(fullOpexTemplates.packageTemplate) ? "package_template_id" : null,
             !fullOpexPriceList?.id ? "full_opex_pricelist_id" : null,
             ...fullOpexTechnicalMissingMappings
           ]
@@ -3728,6 +3807,7 @@
           consultant: state.values.preparedBy,
           country_id: state.values.country,
           customer_country_id: state.values.country,
+          odoo_mapping_environment: ODOO_MAPPING_ENV,
           odoo_entity_key: odooEntityKey,
           odoo_company_id: odooRouting.odooCompanyId,
           operating_unit_id: odooRouting.operatingUnitId,
@@ -3751,7 +3831,7 @@
           technology_profile: hasInstoreFit() || retailChainIsarsoft || propertySnapshot?.reidCameras > 0 ? "HYBRID_3D_IP" : "3D_ONLY",
           entrance_sensor: {
             technology_id: entranceSensor.technologyId,
-            capex_per_unit: Number(entranceSensor.capexPerSensor || 0),
+            capex_per_unit: retailChainIsarsoft ? isarsoftCameraPricing.unitPrice : Number(entranceSensor.capexPerSensor || 0),
             label: entranceSensor.label
           },
           selected_capabilities: selectedCapabilities(),
@@ -3763,10 +3843,12 @@
         },
         odoo_template: {
           base_template_id: odooTemplate.baseTemplate,
-          base_template_test_id: baseTemplateRecord?.testId || null,
+          base_template_test_id: odooTemplateId(baseTemplateRecord),
           base_template_production_id: baseTemplateRecord?.productionId || null,
           base_template_builder_config: baseTemplateRecord?.builderConfig || null,
+          selected_template_id: primaryTemplateId,
           selected_template_test_id: primaryTemplateId,
+          selected_template_production_id: ODOO_MAPPING_ENV === "production" ? primaryTemplateId : null,
           selected_template_builder_config: primaryTemplateBuilderConfig,
           add_on_template_ids: odooTemplate.addOnTemplates,
           country_variant: state.values.country,
@@ -3774,28 +3856,28 @@
           resolved_template_ref: `${odooTemplate.baseTemplate}_${odooEntityKey}`,
           package_opex_template: packageOpexRecord ? {
             package: solutionPackage,
-            test_id: packageOpexRecord.testId,
+            test_id: odooTemplateId(packageOpexRecord),
             production_id: packageOpexRecord.productionId,
             builder_config: packageOpexRecord.builderConfig
           } : null,
           instore_capex_template: instoreCapexRecord ? {
             builder_id: `tpl_rc_${instoreKey}`,
-            test_id: instoreCapexRecord.testId,
+            test_id: odooTemplateId(instoreCapexRecord),
             production_id: instoreCapexRecord.productionId,
             builder_config: instoreCapexRecord.builderConfig
           } : null,
           instore_opex_template: instoreOpexRecord ? {
-            test_id: instoreOpexRecord.testId,
+            test_id: odooTemplateId(instoreOpexRecord),
             production_id: instoreOpexRecord.productionId,
             builder_config: instoreOpexRecord.builderConfig
           } : null,
           isarsoft_capex_template: reidCapexRecord ? {
-            test_id: reidCapexRecord.testId,
+            test_id: odooTemplateId(reidCapexRecord),
             production_id: reidCapexRecord.productionId,
             builder_config: reidCapexRecord.builderConfig
           } : null,
           isarsoft_subscription_addon_template: reidOpexRecord ? {
-            test_id: reidOpexRecord.testId,
+            test_id: odooTemplateId(reidOpexRecord),
             production_id: reidOpexRecord.productionId,
             builder_config: reidOpexRecord.builderConfig
           } : null,
@@ -3807,14 +3889,16 @@
           camera_count: retailChainIsarsoft ? Number(entranceComponent.units || 0) : Number(propertySnapshot?.reidCameras || 0),
           camera_hardware_count: retailChainIsarsoft ? Number(entranceComponent.billable_units || 0) : Number(propertySnapshot?.reidCameras || 0),
           existing_network_reused: retailChainIsarsoft ? Boolean(state.values.retailIsarsoftExistingNetwork) : false,
-          camera_price_capex: Number(PRICING.reId?.ipCameraCapex || 0),
+          camera_price_capex: isarsoftCameraPricing.unitPrice,
+          camera_price_tier: isarsoftCameraPricing.tier,
+          camera_price_scope_count: isarsoftCameraPricing.cameraCount,
           server: isarsoftServerResolution,
           server_capex: retailChainIsarsoft ? Number(active.find(component => component.component_key === "isarsoft_server")?.hardware_capex_total || 0) : Number(propertySnapshot?.reidServerCapex || 0),
           camera_setup_total: retailChainIsarsoft ? Number(entranceComponent.setup_capex_total || 0) : Number(propertySnapshot?.reidCameraSetupCapex || 0),
           location_resolution: isarsoftServerResolution?.locations || [],
           mapping_complete: isarsoftMode === "none" || Boolean(isarsoftServerResolution?.mappingComplete),
-          capex_template: reidCapexRecord ? { test_id: reidCapexRecord.testId, builder_config: reidCapexRecord.builderConfig } : null,
-          subscription_addon_template: reidOpexRecord ? { test_id: reidOpexRecord.testId, builder_config: reidOpexRecord.builderConfig } : null,
+          capex_template: reidCapexRecord ? { test_id: odooTemplateId(reidCapexRecord), builder_config: reidCapexRecord.builderConfig } : null,
+          subscription_addon_template: reidOpexRecord ? { test_id: odooTemplateId(reidOpexRecord), builder_config: reidOpexRecord.builderConfig } : null,
           review_required: true
         },
         instore: (() => {
@@ -3877,7 +3961,7 @@
           isarsoft_servers: isarsoftServerResolution?.validation || null
         },
         financials: {
-          total_hardware_capex: propertySnapshot ? Number(propertySnapshot.hardwareCapex || 0) : active.reduce((sum, component) => sum + Number(component.hardware_capex_total || component.capex_total || 0), 0),
+          total_hardware_capex: propertySnapshot ? Number(propertySnapshot.hardwareCapex || 0) : active.reduce((sum, component) => sum + Number(component.hardware_capex_total ?? component.capex_total ?? 0), 0),
           total_setup_capex: propertySnapshot ? Number(propertySnapshot.setupCapex || 0) : active.reduce((sum, component) => sum + Number(component.setup_capex_total || 0), 0),
           total_capex: c.capexTotal,
           base_monthly_rate_per_sensor: Number(PRICING.packagePricing?.[pricingSegment]?.["3D"]?.[solutionPackage] || 0),
@@ -3915,12 +3999,12 @@
         capex_pricelist_id: odooPriceLists?.capex?.id || null,
         opex_pricelist_id: primarySubscriptionPriceList?.id || null,
         subscription_pricelist_id: primarySubscriptionPriceList?.id || null,
-        subscription_template_id: primarySubscriptionTemplate?.testId || null,
+        subscription_template_id: odooTemplateId(primarySubscriptionTemplate),
         instore_addon_pricelist_id: instoreAddonPriceLists?.opex?.id || null,
-        instore_addon_template_id: instoreOpexRecord?.testId || null,
+        instore_addon_template_id: odooTemplateId(instoreOpexRecord),
         sales_team_id: odooSalesTeam?.id || null,
         odoo_price_lists: odooPriceLists ? {
-          environment: "test",
+          environment: ODOO_MAPPING_ENV,
           tier: odooPriceLists.tier,
           sensor_count: odooPriceLists.sensorCount,
           capex: odooPriceLists.capex,
@@ -3936,21 +4020,21 @@
         subscription_quote: primarySubscriptionTemplate && primarySubscriptionPriceList ? {
           package: solutionPackage,
           commercial_model: fullOpexAsPrimary ? "full_opex" : "capex_opex",
-          template_id: primarySubscriptionTemplate.testId,
+          template_id: odooTemplateId(primarySubscriptionTemplate),
           template_builder_config: primarySubscriptionTemplate.builderConfig,
           pricelist_id: primarySubscriptionPriceList.id,
           pricelist_label: primarySubscriptionPriceList.label,
           tier: fullOpexAsPrimary ? fullOpex.priceLists?.tier || null : odooPriceLists.tier,
           quantity: fullOpexAsPrimary ? Number(fullOpex.sensorCount || 0) : Number(commercialSensorCount || 0),
           instore_addon: instoreComponent && instoreOpexRecord && instoreAddonPriceLists ? {
-            template_id: instoreOpexRecord.testId,
+            template_id: odooTemplateId(instoreOpexRecord),
             template_builder_config: instoreOpexRecord.builderConfig,
             pricelist_id: instoreAddonPriceLists.opex.id,
             quantity: Number(instoreComponent.units || 0),
             technology: state.values.instoreTechnology
           } : null,
           isarsoft_addon: isarsoftMode === "addon" && reidOpexRecord ? {
-            template_id: reidOpexRecord.testId,
+            template_id: odooTemplateId(reidOpexRecord),
             template_builder_config: reidOpexRecord.builderConfig,
             pricelist_id: primarySubscriptionPriceList.id,
             quantity: propertySnapshot.reidCameras,
@@ -3974,7 +4058,7 @@
           monthly_total: fullOpexMonthlyTotal,
           installation_capex_total: installationCapexTotal,
           capex_for_opex_template: fullOpexTemplates.capexForOpex ? {
-            template_id: fullOpexTemplates.capexForOpex.testId,
+            template_id: odooTemplateId(fullOpexTemplates.capexForOpex),
             template_builder_config: fullOpexTemplates.capexForOpex.builderConfig,
             production_id: fullOpexTemplates.capexForOpex.productionId
           } : null,
@@ -3989,13 +4073,14 @@
             tier: fullOpex.priceLists?.tier || null
           } : null,
           package_template: fullOpexTemplates.packageTemplate ? {
-            template_id: fullOpexTemplates.packageTemplate.testId,
+            template_id: odooTemplateId(fullOpexTemplates.packageTemplate),
             template_builder_config: fullOpexTemplates.packageTemplate.builderConfig,
             production_id: fullOpexTemplates.packageTemplate.productionId
           } : null,
           missing_mapping: {
-            capex_for_opex_template: !fullOpexTemplates.capexForOpex?.testId,
-            package_template: !fullOpexTemplates.packageTemplate?.testId,
+            capex_for_opex_template: !odooTemplateId(fullOpexTemplates.capexForOpex),
+            capex_pricelist: !odooPriceLists?.capex?.id,
+            package_template: !odooTemplateId(fullOpexTemplates.packageTemplate),
             pricelist: !fullOpexPriceList?.id
           },
           note: "Full OPEX still requires explicit quote routing before automated generation."
@@ -4047,9 +4132,9 @@
           capex_pricelist_id: odooPriceLists?.capex?.id || null,
           opex_pricelist_id: primarySubscriptionPriceList?.id || null,
           subscription_pricelist_id: primarySubscriptionPriceList?.id || null,
-          subscription_template_id: primarySubscriptionTemplate?.testId || null,
+          subscription_template_id: odooTemplateId(primarySubscriptionTemplate),
           instore_addon_pricelist_id: instoreAddonPriceLists?.opex?.id || null,
-          instore_addon_template_id: instoreOpexRecord?.testId || null,
+          instore_addon_template_id: odooTemplateId(instoreOpexRecord),
           sales_team_id: odooSalesTeam?.id || null,
           operating_unit_id: odooRouting.operatingUnitId,
           user_id: odooRouting.userId
@@ -4538,6 +4623,7 @@
       const entrance = components.entrance_performance;
       const instore = components.instore_journey;
       const entranceSensor = getEntranceSensor(recommendedPackageKey(), state.values.entranceSensorType);
+      const entranceCameraPricing = entranceSensor.type === "isarsoft" ? ipCameraPricing("retailChain", Number(entrance?.units || 0)) : null;
       return `
         <div class="notice" style="margin-top:16px;">
           <strong>Entrance sensor</strong>
@@ -4545,7 +4631,7 @@
             <div class="inline-input-row" style="margin-top:10px;">
               <label><input type="radio" name="entranceSensorType" data-pricing-choice="entranceSensorType" value="premium" ${state.values.entranceSensorType === "premium" ? "checked" : ""}> Premium 3D (${euro(RETAIL_PRICING.entrancePerformance?.sensors?.premium?.capexPerSensor)})</label>
               <label><input type="radio" name="entranceSensorType" data-pricing-choice="entranceSensorType" value="basic" ${state.values.entranceSensorType === "basic" ? "checked" : ""}> Basic 3D (${euro(RETAIL_PRICING.entrancePerformance?.sensors?.basic?.capexPerSensor)})</label>
-              ${state.customerType === "Retail Chain" ? `<label><input type="radio" name="entranceSensorType" data-pricing-choice="entranceSensorType" value="isarsoft" ${state.values.entranceSensorType === "isarsoft" ? "checked" : ""}> Isarsoft (${euro(RETAIL_PRICING.entrancePerformance?.sensors?.isarsoft?.capexPerSensor)})</label>` : ""}
+              ${state.customerType === "Retail Chain" ? `<label><input type="radio" name="entranceSensorType" data-pricing-choice="entranceSensorType" value="isarsoft" ${state.values.entranceSensorType === "isarsoft" ? "checked" : ""}> Isarsoft (${euro(entranceCameraPricing?.unitPrice ?? RETAIL_PRICING.entrancePerformance?.sensors?.isarsoft?.capexPerSensor)})</label>` : ""}
             </div>` : `
             <p class="muted" style="margin:10px 0 0;">${entranceSensor.label} (${euro(entranceSensor.capexPerSensor)}) is fixed for the Enterprise package.</p>`}
           ${state.customerType === "Retail Chain" && state.values.entranceSensorType === "isarsoft" ? `<label style="display:block;margin-top:10px;"><input type="checkbox" id="retailIsarsoftExistingNetwork" ${state.values.retailIsarsoftExistingNetwork ? "checked" : ""}> Reuse the retailer's existing IP camera network</label><p class="muted" style="margin:6px 0 0;">When enabled, camera hardware is excluded; the Isarsoft server and setup remain in scope.</p>` : ""}
@@ -4881,12 +4967,13 @@
       const outdoorUnit = Number(sensors.outdoorEntrance?.capex || 0);
       const scope = retailPropertyAdditionalScope();
       const zoneUnit = Number(sensors.zoneSensor?.[packageKey]?.capex || 0);
-      const reidCameraUnit = Number(PRICING.reId?.ipCameraCapex || PRICING.components?.REID_IP?.capex || 0);
+      const reidCameraPricing = ipCameraPricing("retailProperty", scope.reidCameras);
+      const reidCameraUnit = reidCameraPricing.unitPrice;
       const anpr = PRICING.retailProperty?.anpr || {};
       const anprUnit = Number(anpr.sensorWithAccessoriesCapex || PRICING.components?.ANPR?.capex || 0);
       const anprSetupUnit = Math.max(0, Number(anpr.totalPerSensor || 0) - anprUnit);
       const zoneHardwareCapex = scope.zoneSensors * zoneUnit * (1 - capexDiscount);
-      const reidCameraHardwareCapex = scope.reidCameras * reidCameraUnit * (1 - capexDiscount);
+      const reidCameraHardwareCapex = scope.reidCameras * reidCameraUnit;
       const anprHardwareCapex = scope.vehicleEntrances * anprUnit;
       const anprSetupCapex = scope.vehicleEntrances * anprSetupUnit;
       const reidServerResolution = scope.reidCameras > 0
@@ -4895,7 +4982,7 @@
       const reidServer = reidServerResolution?.products?.[0] || null;
       const reidServerCapex = (reidServerResolution?.products || []).reduce((sum, server) => sum + Number(server.capex || 0) * Number(server.quantity || 0), 0);
       const reidServerSetup = (reidServerResolution?.products || []).reduce((sum, server) => sum + Number(server.setupCost || 0) * Number(server.quantity || 0), 0);
-      const hardwareCapex = ((indoor * indoorUnit) + (outdoor * outdoorUnit) + (scope.zoneSensors * zoneUnit) + (scope.reidCameras * reidCameraUnit)) * (1 - capexDiscount) + reidServerCapex + anprHardwareCapex;
+      const hardwareCapex = ((indoor * indoorUnit) + (outdoor * outdoorUnit) + (scope.zoneSensors * zoneUnit)) * (1 - capexDiscount) + reidCameraHardwareCapex + reidServerCapex + anprHardwareCapex;
       const setupCapex = getLocationSetup(state.values.country, "retailProperty") + total * getSetupCost(state.values.country, "retailProperty", "3D");
       const zoneSetupCapex = scope.zoneSensors * getSetupCost(state.values.country, "retailProperty", "3D");
       const reidCameraSetupCapex = scope.reidCameras * getSetupCost(state.values.country, "retailProperty", "3D");
@@ -4913,6 +5000,8 @@
         entranceSensors: total,
         zoneSensors: scope.zoneSensors,
         reidCameras: scope.reidCameras,
+        reidCameraUnit,
+        reidCameraPriceTier: reidCameraPricing.tier,
         vehicleEntrances: scope.vehicleEntrances,
         parkingActive: scope.parkingActive,
         reidServer,
@@ -5142,8 +5231,14 @@
       const isarsoftMappingComplete = segment === "retailProperty"
         ? !propertySnapshot?.reidCameras || Boolean(propertySnapshot.reidServerResolution?.mappingComplete)
         : componentScope.filter(component => component.component_key === "isarsoft_server").every(component => Boolean(component.server_profiles?.mappingComplete));
-      const mappingComplete = Boolean(templates.capexForOpex?.testId && templates.packageTemplate?.testId && priceList?.id) && processingMappingComplete && isarsoftMappingComplete;
-      const ready = pricingComplete && compositionConfirmed && mappingComplete && config.quoteGenerationEnabled === true;
+      const hasIsarsoft = segment === "retailProperty" ? Boolean(propertySnapshot?.reidCameras) : componentScope.some(component => component.component_key === "isarsoft_server");
+      const serverRuleMappingComplete = !hasIsarsoft || [
+        ...(PRICING.isarsoftServerProfiles?.retailChain || []),
+        ...(PRICING.isarsoftServerProfiles?.retailProperty || [])
+      ].every(profile => Number.isInteger(odooIsarsoftServerProduct(profile, routing.entityKey)?.odoo_product_id));
+      const mappingComplete = Boolean(odooTemplateId(templates.capexForOpex) && odooTemplateId(templates.packageTemplate) && priceLists?.capex?.id && priceList?.id) && processingMappingComplete && isarsoftMappingComplete && serverRuleMappingComplete;
+      // Commercial comparison remains available while quote routing is incomplete.
+      const ready = pricingComplete && compositionConfirmed && config.quoteGenerationEnabled === true;
       return { config, segment, sensorCount, sensorType, solutionPackage, tier, monthlyRate, pricingComplete, compositionConfirmed, mappingComplete, processingMappingComplete, isarsoftMappingComplete, templates, priceLists, priceList, ready };
     }
 
@@ -5200,6 +5295,7 @@
         const missing = quotePayload?.full_opex_quote?.missing_mapping || {};
         const missingLabels = [
           missing.capex_for_opex_template ? "CAPEX-for-OPEX template" : null,
+          missing.capex_pricelist ? "CAPEX-for-OPEX pricelist" : null,
           missing.package_template ? "Full OPEX package template" : null,
           missing.pricelist ? "Full OPEX pricelist" : null
         ].filter(Boolean);
@@ -5505,6 +5601,10 @@
         status.textContent = commercialValidation.errors.join(" ");
         return;
       }
+      if (ODOO_MAPPING_ENV === "production" && PRICING.odooProductionSubmissionEnabled !== true) {
+        status.textContent = "Production mapping is ready for review. Confirm the n8n and Odoo production route before sending a quote request.";
+        return;
+      }
       button.disabled = true;
       button.textContent = "Building quote...";
       status.textContent = "Sending the quote request...";
@@ -5572,7 +5672,13 @@
     ["clientName", "preparedBy", "contactName", "contactEmail", "contactRole"].forEach(id => {
       const field = document.getElementById(id);
       if (!field) return;
-      const refresh = () => { readInputs(); showContextValidation(); renderNav(); renderHero(); };
+      const refresh = () => {
+        readInputs();
+        if (id === "preparedBy") setCountryDefaultForSalesperson();
+        showContextValidation();
+        renderNav();
+        renderHero();
+      };
       field.addEventListener("input", refresh);
       field.addEventListener("change", refresh);
     });

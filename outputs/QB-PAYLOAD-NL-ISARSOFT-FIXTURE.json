@@ -1,0 +1,1311 @@
+{
+  "meta": {
+    "builder_version": "2026-07-23-v30.1",
+    "timestamp": "2026-08-31T10:44:19.968Z",
+    "consultant": "Christiaan van Rooijen",
+    "country_id": "NL",
+    "customer_country_id": "NL",
+    "odoo_entity_key": "NL",
+    "routing_source": "salesperson",
+    "commercial_model": "capex_opex",
+    "currency_calculation": "EUR",
+    "currency_display": "EUR",
+    "exchange_rate_used": null,
+    "exchange_rate_source": null
+  },
+  "customer": {
+    "company": "Fixture customer",
+    "segment": "retailChain",
+    "stores": 1,
+    "footfall_per_week": 8400
+  },
+  "solution": {
+    "configuration_id": "RC_FOOTFALL",
+    "solution_package": "professional",
+    "technology_profile": "HYBRID_3D_IP",
+    "entrance_sensor": {
+      "technology_id": "REID_IP",
+      "capex_per_unit": 450,
+      "label": "Isarsoft IP camera"
+    },
+    "selected_capabilities": [
+      "footfall",
+      "gender",
+      "age",
+      "group"
+    ],
+    "review_gates": {
+      "technical_review": true,
+      "privacy_review": true,
+      "commercial_review": false
+    }
+  },
+  "odoo_template": {
+    "base_template_id": "tpl_rc_footfall_professional_isarsoft",
+    "base_template_test_id": 272,
+    "base_template_production_id": null,
+    "base_template_builder_config": "NL_QB_Footfall_Professional_Isarsoft_Retail",
+    "selected_template_test_id": 272,
+    "selected_template_builder_config": "NL_QB_Footfall_Professional_Isarsoft_Retail",
+    "add_on_template_ids": [],
+    "country_variant": "NL",
+    "entity_variant": "NL",
+    "resolved_template_ref": "tpl_rc_footfall_professional_isarsoft_NL",
+    "package_opex_template": {
+      "package": "professional",
+      "test_id": 216,
+      "production_id": null,
+      "builder_config": "NL_QB_Professional_Retail_Package"
+    },
+    "instore_capex_template": null,
+    "instore_opex_template": null,
+    "isarsoft_capex_template": null,
+    "isarsoft_subscription_addon_template": null,
+    "isarsoft_mode": "base"
+  },
+  "sensor_lines": [
+    {
+      "technology_id": "REID_IP",
+      "role": "entrance_performance",
+      "quantity": 2,
+      "base_capex_per_unit": 450,
+      "capex_discount_pct": 0,
+      "net_capex_per_unit": 450,
+      "total_capex": 900,
+      "setup_cost_per_unit": 425,
+      "total_setup": 850,
+      "monthly_rate_per_unit": 40,
+      "total_monthly": 80
+    },
+    {
+      "technology_id": "ISARSOFT_SERVER",
+      "role": "isarsoft_server",
+      "quantity": 1,
+      "base_capex_per_unit": 1050,
+      "capex_discount_pct": 0,
+      "net_capex_per_unit": 1050,
+      "total_capex": 1050,
+      "setup_cost_per_unit": 750,
+      "total_setup": 750,
+      "monthly_rate_per_unit": null,
+      "total_monthly": 0
+    }
+  ],
+  "isarsoft": {
+    "mode": "base",
+    "camera_count": 2,
+    "camera_hardware_count": 2,
+    "existing_network_reused": false,
+    "camera_price_capex": 450,
+    "server": {
+      "locations": [
+        {
+          "location_key": "store_001",
+          "camera_count": 2,
+          "server": {
+            "profile_key": "orin_nano_8gb",
+            "gpu": "NVIDIA Jetson Orin Nano 8 GB",
+            "system_ram": "8 GB shared",
+            "max_streams": 2,
+            "odoo_products": {
+              "NL": {
+                "name": "PFM Isarsoft Server - Orin Nano 8GB - RC",
+                "internal_reference": "PFMNL-PFM/14387",
+                "odoo_product_template_id": 15547,
+                "odoo_product_id": 18530
+              },
+              "UK": {
+                "name": "PFM Isarsoft Server - Orin Nano 8GB - RC",
+                "internal_reference": "PFMUK-PFM/REID2002RC",
+                "odoo_product_id": 15538
+              },
+              "DE": {
+                "name": "PFM Isarsoft Server - Orin Nano 8GB - RC",
+                "internal_reference": "PFMDE-PFM/REID2002RC",
+                "odoo_product_id": null
+              }
+            },
+            "sku": "PFM-EDGE-NANO",
+            "name": "PFM Isarsoft Server - Orin Nano 8GB - RC",
+            "capex": 1050,
+            "setupCost": 750,
+            "odoo_product_id": 18530,
+            "odoo_product_template_id": 15547,
+            "internal_reference": "PFMNL-PFM/14387",
+            "mappingComplete": true,
+            "selected_profile_is_smallest_sufficient": true,
+            "cameraCount": 2
+          }
+        }
+      ],
+      "products": [
+        {
+          "profile_key": "orin_nano_8gb",
+          "gpu": "NVIDIA Jetson Orin Nano 8 GB",
+          "system_ram": "8 GB shared",
+          "max_streams": 2,
+          "odoo_products": {
+            "NL": {
+              "name": "PFM Isarsoft Server - Orin Nano 8GB - RC",
+              "internal_reference": "PFMNL-PFM/14387",
+              "odoo_product_template_id": 15547,
+              "odoo_product_id": 18530
+            },
+            "UK": {
+              "name": "PFM Isarsoft Server - Orin Nano 8GB - RC",
+              "internal_reference": "PFMUK-PFM/REID2002RC",
+              "odoo_product_id": 15538
+            },
+            "DE": {
+              "name": "PFM Isarsoft Server - Orin Nano 8GB - RC",
+              "internal_reference": "PFMDE-PFM/REID2002RC",
+              "odoo_product_id": null
+            }
+          },
+          "sku": "PFM-EDGE-NANO",
+          "name": "PFM Isarsoft Server - Orin Nano 8GB - RC",
+          "capex": 1050,
+          "setupCost": 750,
+          "odoo_product_id": 18530,
+          "odoo_product_template_id": 15547,
+          "internal_reference": "PFMNL-PFM/14387",
+          "mappingComplete": true,
+          "selected_profile_is_smallest_sufficient": true,
+          "cameraCount": 2,
+          "quantity": 1
+        }
+      ],
+      "mappingComplete": true,
+      "unresolvedLocations": 0,
+      "validation": {
+        "validInput": true,
+        "supportedSegment": true,
+        "positiveCameraCounts": true,
+        "sufficientCapacity": true,
+        "smallestSufficientProfile": true
+      }
+    },
+    "server_capex": 1050,
+    "camera_setup_total": 850,
+    "location_resolution": [
+      {
+        "location_key": "store_001",
+        "camera_count": 2,
+        "server": {
+          "profile_key": "orin_nano_8gb",
+          "gpu": "NVIDIA Jetson Orin Nano 8 GB",
+          "system_ram": "8 GB shared",
+          "max_streams": 2,
+          "odoo_products": {
+            "NL": {
+              "name": "PFM Isarsoft Server - Orin Nano 8GB - RC",
+              "internal_reference": "PFMNL-PFM/14387",
+              "odoo_product_template_id": 15547,
+              "odoo_product_id": 18530
+            },
+            "UK": {
+              "name": "PFM Isarsoft Server - Orin Nano 8GB - RC",
+              "internal_reference": "PFMUK-PFM/REID2002RC",
+              "odoo_product_id": 15538
+            },
+            "DE": {
+              "name": "PFM Isarsoft Server - Orin Nano 8GB - RC",
+              "internal_reference": "PFMDE-PFM/REID2002RC",
+              "odoo_product_id": null
+            }
+          },
+          "sku": "PFM-EDGE-NANO",
+          "name": "PFM Isarsoft Server - Orin Nano 8GB - RC",
+          "capex": 1050,
+          "setupCost": 750,
+          "odoo_product_id": 18530,
+          "odoo_product_template_id": 15547,
+          "internal_reference": "PFMNL-PFM/14387",
+          "mappingComplete": true,
+          "selected_profile_is_smallest_sufficient": true,
+          "cameraCount": 2
+        }
+      }
+    ],
+    "mapping_complete": true,
+    "capex_template": null,
+    "subscription_addon_template": null,
+    "review_required": true
+  },
+  "instore": null,
+  "server": {
+    "locations": [
+      {
+        "location_key": "store_001",
+        "camera_count": 2,
+        "server": {
+          "profile_key": "orin_nano_8gb",
+          "gpu": "NVIDIA Jetson Orin Nano 8 GB",
+          "system_ram": "8 GB shared",
+          "max_streams": 2,
+          "odoo_products": {
+            "NL": {
+              "name": "PFM Isarsoft Server - Orin Nano 8GB - RC",
+              "internal_reference": "PFMNL-PFM/14387",
+              "odoo_product_template_id": 15547,
+              "odoo_product_id": 18530
+            },
+            "UK": {
+              "name": "PFM Isarsoft Server - Orin Nano 8GB - RC",
+              "internal_reference": "PFMUK-PFM/REID2002RC",
+              "odoo_product_id": 15538
+            },
+            "DE": {
+              "name": "PFM Isarsoft Server - Orin Nano 8GB - RC",
+              "internal_reference": "PFMDE-PFM/REID2002RC",
+              "odoo_product_id": null
+            }
+          },
+          "sku": "PFM-EDGE-NANO",
+          "name": "PFM Isarsoft Server - Orin Nano 8GB - RC",
+          "capex": 1050,
+          "setupCost": 750,
+          "odoo_product_id": 18530,
+          "odoo_product_template_id": 15547,
+          "internal_reference": "PFMNL-PFM/14387",
+          "mappingComplete": true,
+          "selected_profile_is_smallest_sufficient": true,
+          "cameraCount": 2
+        }
+      }
+    ],
+    "products": [
+      {
+        "profile_key": "orin_nano_8gb",
+        "gpu": "NVIDIA Jetson Orin Nano 8 GB",
+        "system_ram": "8 GB shared",
+        "max_streams": 2,
+        "odoo_products": {
+          "NL": {
+            "name": "PFM Isarsoft Server - Orin Nano 8GB - RC",
+            "internal_reference": "PFMNL-PFM/14387",
+            "odoo_product_template_id": 15547,
+            "odoo_product_id": 18530
+          },
+          "UK": {
+            "name": "PFM Isarsoft Server - Orin Nano 8GB - RC",
+            "internal_reference": "PFMUK-PFM/REID2002RC",
+            "odoo_product_id": 15538
+          },
+          "DE": {
+            "name": "PFM Isarsoft Server - Orin Nano 8GB - RC",
+            "internal_reference": "PFMDE-PFM/REID2002RC",
+            "odoo_product_id": null
+          }
+        },
+        "sku": "PFM-EDGE-NANO",
+        "name": "PFM Isarsoft Server - Orin Nano 8GB - RC",
+        "capex": 1050,
+        "setupCost": 750,
+        "odoo_product_id": 18530,
+        "odoo_product_template_id": 15547,
+        "internal_reference": "PFMNL-PFM/14387",
+        "mappingComplete": true,
+        "selected_profile_is_smallest_sufficient": true,
+        "cameraCount": 2,
+        "quantity": 1
+      }
+    ],
+    "mappingComplete": true,
+    "unresolvedLocations": 0,
+    "validation": {
+      "validInput": true,
+      "supportedSegment": true,
+      "positiveCameraCounts": true,
+      "sufficientCapacity": true,
+      "smallestSufficientProfile": true
+    }
+  },
+  "odoo_line_quantity_rules": [
+    {
+      "product_id": 18530,
+      "odoo_product_template_id": 15547,
+      "internal_reference": "PFMNL-PFM/14387",
+      "role": "isarsoft_server",
+      "technology_id": "REID_IP",
+      "profile_key": "orin_nano_8gb",
+      "action": "set_quantity",
+      "quantity": 1,
+      "source": "builder_configuration"
+    },
+    {
+      "product_id": 18531,
+      "odoo_product_template_id": 15548,
+      "internal_reference": "PFMNL-PFM/14388",
+      "role": "isarsoft_server",
+      "technology_id": "REID_IP",
+      "profile_key": "orin_nx_16gb",
+      "action": "remove",
+      "quantity": 0,
+      "source": "builder_configuration"
+    },
+    {
+      "product_id": 18532,
+      "odoo_product_template_id": 15549,
+      "internal_reference": "PFMNL-PFM/14389",
+      "role": "isarsoft_server",
+      "technology_id": "REID_IP",
+      "profile_key": "agx_orin_64gb",
+      "action": "remove",
+      "quantity": 0,
+      "source": "builder_configuration"
+    },
+    {
+      "product_id": 18533,
+      "odoo_product_template_id": 15550,
+      "internal_reference": "PFMNL-PFM/14390",
+      "role": "isarsoft_server",
+      "technology_id": "REID_IP",
+      "profile_key": "agx_thor_128gb",
+      "action": "remove",
+      "quantity": 0,
+      "source": "builder_configuration"
+    },
+    {
+      "product_id": 18534,
+      "odoo_product_template_id": 15551,
+      "internal_reference": "PFMNL-PFM/14391",
+      "role": "isarsoft_server",
+      "technology_id": "REID_IP",
+      "profile_key": "rtx_2000_ada",
+      "action": "remove",
+      "quantity": 0,
+      "source": "builder_configuration"
+    },
+    {
+      "product_id": 18535,
+      "odoo_product_template_id": 15552,
+      "internal_reference": "PFMNL-PFM/14392",
+      "role": "isarsoft_server",
+      "technology_id": "REID_IP",
+      "profile_key": "rtx_4000_ada",
+      "action": "remove",
+      "quantity": 0,
+      "source": "builder_configuration"
+    },
+    {
+      "product_id": 18536,
+      "odoo_product_template_id": 15553,
+      "internal_reference": "PFMNL-PFM/14393",
+      "role": "isarsoft_server",
+      "technology_id": "REID_IP",
+      "profile_key": "dual_rtx_4000_ada",
+      "action": "remove",
+      "quantity": 0,
+      "source": "builder_configuration"
+    },
+    {
+      "product_id": 18537,
+      "odoo_product_template_id": 15554,
+      "internal_reference": "PFMNL-PFM/14394",
+      "role": "isarsoft_server",
+      "technology_id": "REID_IP",
+      "profile_key": "dual_rtx_5000_ada",
+      "action": "remove",
+      "quantity": 0,
+      "source": "builder_configuration"
+    },
+    {
+      "product_id": 18538,
+      "odoo_product_template_id": 15555,
+      "internal_reference": "PFMNL-PFM/14395",
+      "role": "isarsoft_server",
+      "technology_id": "REID_IP",
+      "profile_key": "dual_rtx_6000_ada",
+      "action": "remove",
+      "quantity": 0,
+      "source": "builder_configuration"
+    }
+  ],
+  "commercial_mapping_complete": true,
+  "mapping_validation": {
+    "valid": true,
+    "errors": [],
+    "processing_units": [],
+    "isarsoft_servers": {
+      "validInput": true,
+      "supportedSegment": true,
+      "positiveCameraCounts": true,
+      "sufficientCapacity": true,
+      "smallestSufficientProfile": true
+    }
+  },
+  "financials": {
+    "total_hardware_capex": 1950,
+    "total_setup_capex": 1600,
+    "total_capex": 3550,
+    "base_monthly_rate_per_sensor": 40,
+    "opex_discount_pct": 0,
+    "total_monthly_opex": 80,
+    "tco_3_years": 6430,
+    "roi_percent": -100,
+    "payback_months": null
+  },
+  "discounts": {
+    "basis": "stores",
+    "count": 1,
+    "capex_discount_pct": 0,
+    "opex_discount_pct": 0
+  },
+  "add_ons": [],
+  "notes": "Draft quotation — requires manual approval before sending.",
+  "source": "pfm_retail_potential_scan_v20",
+  "customer_country_id": "NL",
+  "odoo_entity_key": "NL",
+  "commercial_model": "capex_opex",
+  "odoo_routing": {
+    "source": "salesperson",
+    "salesperson_name": "Christiaan van Rooijen",
+    "user_id": 231,
+    "entity_key": "NL",
+    "sales_team_id": 1,
+    "sales_team_label": "Sales NL"
+  },
+  "company_name": "Fixture customer",
+  "contact_name": "Fixture contact",
+  "contact_email": "fixture@example.com",
+  "num_stores": 1,
+  "template_id": 272,
+  "pricelist_id": 3074,
+  "capex_pricelist_id": 3074,
+  "opex_pricelist_id": 3076,
+  "subscription_pricelist_id": 3076,
+  "subscription_template_id": 216,
+  "instore_addon_pricelist_id": null,
+  "instore_addon_template_id": null,
+  "sales_team_id": 1,
+  "odoo_price_lists": {
+    "environment": "test",
+    "tier": "tier0",
+    "sensor_count": 2,
+    "capex": {
+      "label": "QB_NL_Retail_Tier0",
+      "id": 3074
+    },
+    "opex": {
+      "label": "QB_NL_SUBS_RETAIL_TIER0",
+      "id": 3076
+    },
+    "subscription_sensor_count": 2,
+    "subscription_tier": "tier0",
+    "instore_addon": null
+  },
+  "subscription_quote": {
+    "package": "professional",
+    "commercial_model": "capex_opex",
+    "template_id": 216,
+    "template_builder_config": "NL_QB_Professional_Retail_Package",
+    "pricelist_id": 3076,
+    "pricelist_label": "QB_NL_SUBS_RETAIL_TIER0",
+    "tier": "tier0",
+    "quantity": 2,
+    "instore_addon": null,
+    "isarsoft_addon": null
+  },
+  "full_opex_quote": {
+    "requested": false,
+    "enabled_for_generation": true,
+    "mapping_complete": true,
+    "term_years": 5,
+    "segment": "retailChain",
+    "package": "professional",
+    "sensor_type": "premium",
+    "vendor": "xovis",
+    "sensor_count": 2,
+    "tier": "1-9",
+    "monthly_hardware_rate_per_sensor": 35.71,
+    "monthly_hardware_total": 71.42,
+    "monthly_subscription_total": 80,
+    "monthly_total": 151.42,
+    "installation_capex_total": 1600,
+    "capex_for_opex_template": {
+      "template_id": 225,
+      "template_builder_config": "NL_QB_Footfall_Intel-5YR_CAPEX_Retail",
+      "production_id": null
+    },
+    "capex_pricelist": {
+      "pricelist_id": 3074,
+      "label": "QB_NL_Retail_Tier0",
+      "tier": "tier0"
+    },
+    "pricelist": {
+      "pricelist_id": 3099,
+      "label": "QB_NL_SUBS_INTEL-5YR_RETAIL_XOVIS",
+      "tier": "tier0"
+    },
+    "package_template": {
+      "template_id": 223,
+      "template_builder_config": "NL_QB_Professional_INTEL-5YR_Retail",
+      "production_id": null
+    },
+    "missing_mapping": {
+      "capex_for_opex_template": false,
+      "package_template": false,
+      "pricelist": false
+    },
+    "note": "Full OPEX still requires explicit quote routing before automated generation."
+  },
+  "operating_unit_id": 7,
+  "user_id": 231,
+  "submitted_at": "2026-08-31T10:44:19.968Z",
+  "created_at": "2026-08-31T10:44:19.968Z",
+  "language": "EN",
+  "amount_of_sensors": 2,
+  "total_hardware_units": 2,
+  "stores_in_scope": 1,
+  "customer_visible": {
+    "client_name": "Fixture customer",
+    "customer_type": "Retail Chain",
+    "operating_unit": "Shops",
+    "prepared_by": "Christiaan van Rooijen",
+    "context": {
+      "segment": "Footwear",
+      "locations": 1,
+      "weekly_footfall_per_store": 8400,
+      "daily_footfall_per_store": 1400,
+      "current_measurement": "Current traffic and sales data",
+      "operating_model": "Sales only"
+    },
+    "selected_goals": [
+      "We do not know who is entering our stores"
+    ],
+    "selected_insight_fits": [
+      "Visitor Profile & Demographic Intelligence"
+    ],
+    "selected_package": "Professional",
+    "active_solution_components": [
+      "Entrance Performance Layer",
+      "Isarsoft analytics server"
+    ],
+    "estimated_baseline_revenue_year": 2515968,
+    "realistic_extra_profit_year": 0,
+    "tco_total": 6430,
+    "realistic_payback_months": null
+  },
+  "lead": {
+    "company_name": "Fixture customer",
+    "contact_name": "Fixture contact",
+    "contact_email": "fixture@example.com",
+    "contact_phone": null,
+    "contact_role": "Commercial",
+    "customer_country_id": "NL",
+    "odoo_entity_key": "NL",
+    "crm_follow_up_consent": false,
+    "crm_consent_specification": {
+      "purpose": "Store the supplied contact details in CRM and allow PFM follow-up after explicit consent.",
+      "collection_point": "Final conversation summary",
+      "human_review_required": true,
+      "automated_email_sending": false
+    },
+    "operating_unit_label": "Shops",
+    "salesperson_name": "Christiaan van Rooijen",
+    "opportunity_type_label": "",
+    "template_id": 272,
+    "pricelist_id": 3074,
+    "capex_pricelist_id": 3074,
+    "opex_pricelist_id": 3076,
+    "subscription_pricelist_id": 3076,
+    "subscription_template_id": 216,
+    "instore_addon_pricelist_id": null,
+    "instore_addon_template_id": null,
+    "sales_team_id": 1,
+    "operating_unit_id": 7,
+    "user_id": 231
+  },
+  "scenario": {
+    "currency": "EUR",
+    "num_stores": 1,
+    "daily_footfall_per_store": 1400,
+    "weekly_footfall_per_store": 8400,
+    "conversion_rate_pct": 18,
+    "average_ticket_value": 32,
+    "gross_margin_pct": 60,
+    "annual_footfall_per_store": 436800,
+    "annual_footfall_total": 436800,
+    "conversion_uplift_pp": 0,
+    "new_conversion_rate_pct": 18,
+    "new_atv": 32,
+    "atv_uplift_pct": 0,
+    "footfall_uplift_pct": 0,
+    "open_days_per_week": 6,
+    "contract_term_years": 3,
+    "roi_approach": "Realistic base",
+    "realisation_factor_pct": 25,
+    "optional_saturday_scenario": {
+      "sat_share_pct": 18,
+      "sat_conversion_boost_pct": 0
+    },
+    "commercial_assumptions": {
+      "install_cost_per_store": 425,
+      "monthly_subscription_per_store": 40,
+      "tco_per_store": 2315,
+      "tco_total": 6430,
+      "component_based_tco": true,
+      "total_capex": 3550,
+      "monthly_service_total": 80
+    },
+    "solution_components": [
+      {
+        "component_key": "entrance_performance",
+        "component_label": "Entrance Performance Layer",
+        "active": true,
+        "stores_in_scope": 1,
+        "units": 2,
+        "billable_units": 2,
+        "unit_label": "IP camera channels",
+        "technology_id": "REID_IP",
+        "base_capex_per_unit": 450,
+        "capex_discount_pct": 0,
+        "net_capex_per_unit": 450,
+        "setup_cost_per_unit": 425,
+        "hardware_capex_total": 900,
+        "setup_capex_total": 850,
+        "capex_total": 1750,
+        "monthly_fee_per_unit": 40,
+        "monthly_fee_total": 80,
+        "tco_total": 4630,
+        "quote_note": "Package pricing includes visitor-profile capabilities; no module add-ons are stacked."
+      },
+      {
+        "component_key": "capture_rate",
+        "component_label": "Street Potential / Capture Rate Layer",
+        "active": false,
+        "stores_in_scope": 0,
+        "units": 0,
+        "unit_label": "sensors",
+        "technology_id": "CAPTURE_3D",
+        "base_capex_per_unit": 450,
+        "capex_discount_pct": 0,
+        "net_capex_per_unit": 450,
+        "setup_cost_per_unit": 425,
+        "hardware_capex_total": 0,
+        "setup_capex_total": 0,
+        "capex_total": 0,
+        "monthly_fee_per_unit": 40,
+        "monthly_fee_total": 0,
+        "tco_total": 0,
+        "quote_note": "Capture sensors use the same package rate and volume discounts."
+      },
+      {
+        "component_key": "instore_journey",
+        "component_label": "In-store Journey Layer",
+        "active": false,
+        "stores_in_scope": 0,
+        "average_store_sqm": 150,
+        "sensors_per_store": 0,
+        "units": 0,
+        "unit_label": "sensors",
+        "technology_id": "INSTORE_LIDAR",
+        "servers": 0,
+        "capex_total": 0,
+        "monthly_fee_per_unit": 450,
+        "monthly_fee_total": 0,
+        "tco_total": 0,
+        "quote_note": "Indicative in-store analytics scope; technical review remains required."
+      },
+      {
+        "component_key": "isarsoft_server",
+        "component_label": "Isarsoft analytics server",
+        "active": true,
+        "units": 1,
+        "unit_label": "server",
+        "technology_id": "ISARSOFT_SERVER",
+        "base_capex_per_unit": 1050,
+        "capex_discount_pct": 0,
+        "net_capex_per_unit": 1050,
+        "hardware_capex_total": 1050,
+        "setup_cost_per_unit": 750,
+        "setup_capex_total": 750,
+        "capex_total": 1800,
+        "monthly_fee_per_unit": 0,
+        "monthly_fee_total": 0,
+        "tco_total": 1800,
+        "server_profiles": {
+          "locations": [
+            {
+              "location_key": "store_001",
+              "camera_count": 2,
+              "server": {
+                "profile_key": "orin_nano_8gb",
+                "gpu": "NVIDIA Jetson Orin Nano 8 GB",
+                "system_ram": "8 GB shared",
+                "max_streams": 2,
+                "odoo_products": {
+                  "NL": {
+                    "name": "PFM Isarsoft Server - Orin Nano 8GB - RC",
+                    "internal_reference": "PFMNL-PFM/14387",
+                    "odoo_product_template_id": 15547,
+                    "odoo_product_id": 18530
+                  },
+                  "UK": {
+                    "name": "PFM Isarsoft Server - Orin Nano 8GB - RC",
+                    "internal_reference": "PFMUK-PFM/REID2002RC",
+                    "odoo_product_id": 15538
+                  },
+                  "DE": {
+                    "name": "PFM Isarsoft Server - Orin Nano 8GB - RC",
+                    "internal_reference": "PFMDE-PFM/REID2002RC",
+                    "odoo_product_id": null
+                  }
+                },
+                "sku": "PFM-EDGE-NANO",
+                "name": "PFM Isarsoft Server - Orin Nano 8GB - RC",
+                "capex": 1050,
+                "setupCost": 750,
+                "odoo_product_id": 18530,
+                "odoo_product_template_id": 15547,
+                "internal_reference": "PFMNL-PFM/14387",
+                "mappingComplete": true,
+                "selected_profile_is_smallest_sufficient": true,
+                "cameraCount": 2
+              }
+            }
+          ],
+          "products": [
+            {
+              "profile_key": "orin_nano_8gb",
+              "gpu": "NVIDIA Jetson Orin Nano 8 GB",
+              "system_ram": "8 GB shared",
+              "max_streams": 2,
+              "odoo_products": {
+                "NL": {
+                  "name": "PFM Isarsoft Server - Orin Nano 8GB - RC",
+                  "internal_reference": "PFMNL-PFM/14387",
+                  "odoo_product_template_id": 15547,
+                  "odoo_product_id": 18530
+                },
+                "UK": {
+                  "name": "PFM Isarsoft Server - Orin Nano 8GB - RC",
+                  "internal_reference": "PFMUK-PFM/REID2002RC",
+                  "odoo_product_id": 15538
+                },
+                "DE": {
+                  "name": "PFM Isarsoft Server - Orin Nano 8GB - RC",
+                  "internal_reference": "PFMDE-PFM/REID2002RC",
+                  "odoo_product_id": null
+                }
+              },
+              "sku": "PFM-EDGE-NANO",
+              "name": "PFM Isarsoft Server - Orin Nano 8GB - RC",
+              "capex": 1050,
+              "setupCost": 750,
+              "odoo_product_id": 18530,
+              "odoo_product_template_id": 15547,
+              "internal_reference": "PFMNL-PFM/14387",
+              "mappingComplete": true,
+              "selected_profile_is_smallest_sufficient": true,
+              "cameraCount": 2,
+              "quantity": 1
+            }
+          ],
+          "mappingComplete": true,
+          "unresolvedLocations": 0,
+          "validation": {
+            "validInput": true,
+            "supportedSegment": true,
+            "positiveCameraCounts": true,
+            "sufficientCapacity": true,
+            "smallestSufficientProfile": true
+          }
+        },
+        "mapping_complete": true,
+        "quote_note": "Server sized per physical location to the selected Isarsoft entrance channels; technical review remains required."
+      }
+    ]
+  },
+  "results": {
+    "revenue_year_total": 2515968,
+    "revenue_year_total_new": 2515968,
+    "uplift_year_total": 0,
+    "uplift_contract_total": 0,
+    "theoretical_extra_profit_year_total": 0,
+    "theoretical_extra_profit_contract_total": 0,
+    "realistic_extra_profit_year_total": 0,
+    "realistic_extra_profit_contract_total": 0,
+    "tco_total": 6430,
+    "total_capex": 3550,
+    "monthly_service_total": 80,
+    "theoretical_net_value_horizon": -6430,
+    "theoretical_roi_horizon_pct": -100,
+    "realistic_net_value_horizon": -6430,
+    "realistic_roi_horizon_pct": -100,
+    "theoretical_payback_months": null,
+    "realistic_payback_months": null,
+    "uplift_components": {
+      "footfall_component": 0,
+      "conversion_component": 0,
+      "atv_component": 0
+    }
+  },
+  "pfm_internal": {
+    "operating_unit_name": "Shops",
+    "operating_unit_id": 7,
+    "salesperson_name": "Christiaan van Rooijen",
+    "salesperson_id": 231,
+    "customer_country_id": "NL",
+    "odoo_entity_key": "NL",
+    "odoo_routing_source": "salesperson",
+    "opportunity_type": "",
+    "template_id": 272,
+    "opportunity_template_id": null,
+    "customer_context": {
+      "segment": "Footwear",
+      "locations": 1,
+      "weekly_footfall_per_store": 8400,
+      "daily_footfall_per_store": 1400,
+      "current_measurement": "Current traffic and sales data",
+      "operating_model": "Sales only"
+    },
+    "selected_performance_leaks": [
+      "We do not know who is entering our stores"
+    ],
+    "selected_insight_fits": [
+      "Visitor Profile & Demographic Intelligence"
+    ],
+    "retail_context": {
+      "entrances": null,
+      "multiple_floors": false
+    },
+    "crm_follow_up_consent": false,
+    "hidden_kpis": [
+      "gender_split",
+      "adult_child_split",
+      "age_category_future",
+      "group_count",
+      "family_share",
+      "visitor_profile_by_store",
+      "visitor_profile_by_period"
+    ],
+    "hidden_subscriptions": [
+      "sub_demographics_gender",
+      "sub_adult_child",
+      "sub_age_future",
+      "sub_group_counting",
+      "sub_visitor_profile_dashboard"
+    ],
+    "recommended_route": "Professional",
+    "suggested_odoo_action": "create_lead_or_indicative_proposal",
+    "human_review_required": true,
+    "solution_components": [
+      {
+        "component_key": "entrance_performance",
+        "component_label": "Entrance Performance Layer",
+        "active": true,
+        "stores_in_scope": 1,
+        "units": 2,
+        "billable_units": 2,
+        "unit_label": "IP camera channels",
+        "technology_id": "REID_IP",
+        "base_capex_per_unit": 450,
+        "capex_discount_pct": 0,
+        "net_capex_per_unit": 450,
+        "setup_cost_per_unit": 425,
+        "hardware_capex_total": 900,
+        "setup_capex_total": 850,
+        "capex_total": 1750,
+        "monthly_fee_per_unit": 40,
+        "monthly_fee_total": 80,
+        "tco_total": 4630,
+        "quote_note": "Package pricing includes visitor-profile capabilities; no module add-ons are stacked."
+      },
+      {
+        "component_key": "capture_rate",
+        "component_label": "Street Potential / Capture Rate Layer",
+        "active": false,
+        "stores_in_scope": 0,
+        "units": 0,
+        "unit_label": "sensors",
+        "technology_id": "CAPTURE_3D",
+        "base_capex_per_unit": 450,
+        "capex_discount_pct": 0,
+        "net_capex_per_unit": 450,
+        "setup_cost_per_unit": 425,
+        "hardware_capex_total": 0,
+        "setup_capex_total": 0,
+        "capex_total": 0,
+        "monthly_fee_per_unit": 40,
+        "monthly_fee_total": 0,
+        "tco_total": 0,
+        "quote_note": "Capture sensors use the same package rate and volume discounts."
+      },
+      {
+        "component_key": "instore_journey",
+        "component_label": "In-store Journey Layer",
+        "active": false,
+        "stores_in_scope": 0,
+        "average_store_sqm": 150,
+        "sensors_per_store": 0,
+        "units": 0,
+        "unit_label": "sensors",
+        "technology_id": "INSTORE_LIDAR",
+        "servers": 0,
+        "capex_total": 0,
+        "monthly_fee_per_unit": 450,
+        "monthly_fee_total": 0,
+        "tco_total": 0,
+        "quote_note": "Indicative in-store analytics scope; technical review remains required."
+      },
+      {
+        "component_key": "isarsoft_server",
+        "component_label": "Isarsoft analytics server",
+        "active": true,
+        "units": 1,
+        "unit_label": "server",
+        "technology_id": "ISARSOFT_SERVER",
+        "base_capex_per_unit": 1050,
+        "capex_discount_pct": 0,
+        "net_capex_per_unit": 1050,
+        "hardware_capex_total": 1050,
+        "setup_cost_per_unit": 750,
+        "setup_capex_total": 750,
+        "capex_total": 1800,
+        "monthly_fee_per_unit": 0,
+        "monthly_fee_total": 0,
+        "tco_total": 1800,
+        "server_profiles": {
+          "locations": [
+            {
+              "location_key": "store_001",
+              "camera_count": 2,
+              "server": {
+                "profile_key": "orin_nano_8gb",
+                "gpu": "NVIDIA Jetson Orin Nano 8 GB",
+                "system_ram": "8 GB shared",
+                "max_streams": 2,
+                "odoo_products": {
+                  "NL": {
+                    "name": "PFM Isarsoft Server - Orin Nano 8GB - RC",
+                    "internal_reference": "PFMNL-PFM/14387",
+                    "odoo_product_template_id": 15547,
+                    "odoo_product_id": 18530
+                  },
+                  "UK": {
+                    "name": "PFM Isarsoft Server - Orin Nano 8GB - RC",
+                    "internal_reference": "PFMUK-PFM/REID2002RC",
+                    "odoo_product_id": 15538
+                  },
+                  "DE": {
+                    "name": "PFM Isarsoft Server - Orin Nano 8GB - RC",
+                    "internal_reference": "PFMDE-PFM/REID2002RC",
+                    "odoo_product_id": null
+                  }
+                },
+                "sku": "PFM-EDGE-NANO",
+                "name": "PFM Isarsoft Server - Orin Nano 8GB - RC",
+                "capex": 1050,
+                "setupCost": 750,
+                "odoo_product_id": 18530,
+                "odoo_product_template_id": 15547,
+                "internal_reference": "PFMNL-PFM/14387",
+                "mappingComplete": true,
+                "selected_profile_is_smallest_sufficient": true,
+                "cameraCount": 2
+              }
+            }
+          ],
+          "products": [
+            {
+              "profile_key": "orin_nano_8gb",
+              "gpu": "NVIDIA Jetson Orin Nano 8 GB",
+              "system_ram": "8 GB shared",
+              "max_streams": 2,
+              "odoo_products": {
+                "NL": {
+                  "name": "PFM Isarsoft Server - Orin Nano 8GB - RC",
+                  "internal_reference": "PFMNL-PFM/14387",
+                  "odoo_product_template_id": 15547,
+                  "odoo_product_id": 18530
+                },
+                "UK": {
+                  "name": "PFM Isarsoft Server - Orin Nano 8GB - RC",
+                  "internal_reference": "PFMUK-PFM/REID2002RC",
+                  "odoo_product_id": 15538
+                },
+                "DE": {
+                  "name": "PFM Isarsoft Server - Orin Nano 8GB - RC",
+                  "internal_reference": "PFMDE-PFM/REID2002RC",
+                  "odoo_product_id": null
+                }
+              },
+              "sku": "PFM-EDGE-NANO",
+              "name": "PFM Isarsoft Server - Orin Nano 8GB - RC",
+              "capex": 1050,
+              "setupCost": 750,
+              "odoo_product_id": 18530,
+              "odoo_product_template_id": 15547,
+              "internal_reference": "PFMNL-PFM/14387",
+              "mappingComplete": true,
+              "selected_profile_is_smallest_sufficient": true,
+              "cameraCount": 2,
+              "quantity": 1
+            }
+          ],
+          "mappingComplete": true,
+          "unresolvedLocations": 0,
+          "validation": {
+            "validInput": true,
+            "supportedSegment": true,
+            "positiveCameraCounts": true,
+            "sufficientCapacity": true,
+            "smallestSufficientProfile": true
+          }
+        },
+        "mapping_complete": true,
+        "quote_note": "Server sized per physical location to the selected Isarsoft entrance channels; technical review remains required."
+      }
+    ],
+    "active_solution_components": [
+      {
+        "component_key": "entrance_performance",
+        "component_label": "Entrance Performance Layer",
+        "active": true,
+        "stores_in_scope": 1,
+        "units": 2,
+        "billable_units": 2,
+        "unit_label": "IP camera channels",
+        "technology_id": "REID_IP",
+        "base_capex_per_unit": 450,
+        "capex_discount_pct": 0,
+        "net_capex_per_unit": 450,
+        "setup_cost_per_unit": 425,
+        "hardware_capex_total": 900,
+        "setup_capex_total": 850,
+        "capex_total": 1750,
+        "monthly_fee_per_unit": 40,
+        "monthly_fee_total": 80,
+        "tco_total": 4630,
+        "quote_note": "Package pricing includes visitor-profile capabilities; no module add-ons are stacked."
+      },
+      {
+        "component_key": "isarsoft_server",
+        "component_label": "Isarsoft analytics server",
+        "active": true,
+        "units": 1,
+        "unit_label": "server",
+        "technology_id": "ISARSOFT_SERVER",
+        "base_capex_per_unit": 1050,
+        "capex_discount_pct": 0,
+        "net_capex_per_unit": 1050,
+        "hardware_capex_total": 1050,
+        "setup_cost_per_unit": 750,
+        "setup_capex_total": 750,
+        "capex_total": 1800,
+        "monthly_fee_per_unit": 0,
+        "monthly_fee_total": 0,
+        "tco_total": 1800,
+        "server_profiles": {
+          "locations": [
+            {
+              "location_key": "store_001",
+              "camera_count": 2,
+              "server": {
+                "profile_key": "orin_nano_8gb",
+                "gpu": "NVIDIA Jetson Orin Nano 8 GB",
+                "system_ram": "8 GB shared",
+                "max_streams": 2,
+                "odoo_products": {
+                  "NL": {
+                    "name": "PFM Isarsoft Server - Orin Nano 8GB - RC",
+                    "internal_reference": "PFMNL-PFM/14387",
+                    "odoo_product_template_id": 15547,
+                    "odoo_product_id": 18530
+                  },
+                  "UK": {
+                    "name": "PFM Isarsoft Server - Orin Nano 8GB - RC",
+                    "internal_reference": "PFMUK-PFM/REID2002RC",
+                    "odoo_product_id": 15538
+                  },
+                  "DE": {
+                    "name": "PFM Isarsoft Server - Orin Nano 8GB - RC",
+                    "internal_reference": "PFMDE-PFM/REID2002RC",
+                    "odoo_product_id": null
+                  }
+                },
+                "sku": "PFM-EDGE-NANO",
+                "name": "PFM Isarsoft Server - Orin Nano 8GB - RC",
+                "capex": 1050,
+                "setupCost": 750,
+                "odoo_product_id": 18530,
+                "odoo_product_template_id": 15547,
+                "internal_reference": "PFMNL-PFM/14387",
+                "mappingComplete": true,
+                "selected_profile_is_smallest_sufficient": true,
+                "cameraCount": 2
+              }
+            }
+          ],
+          "products": [
+            {
+              "profile_key": "orin_nano_8gb",
+              "gpu": "NVIDIA Jetson Orin Nano 8 GB",
+              "system_ram": "8 GB shared",
+              "max_streams": 2,
+              "odoo_products": {
+                "NL": {
+                  "name": "PFM Isarsoft Server - Orin Nano 8GB - RC",
+                  "internal_reference": "PFMNL-PFM/14387",
+                  "odoo_product_template_id": 15547,
+                  "odoo_product_id": 18530
+                },
+                "UK": {
+                  "name": "PFM Isarsoft Server - Orin Nano 8GB - RC",
+                  "internal_reference": "PFMUK-PFM/REID2002RC",
+                  "odoo_product_id": 15538
+                },
+                "DE": {
+                  "name": "PFM Isarsoft Server - Orin Nano 8GB - RC",
+                  "internal_reference": "PFMDE-PFM/REID2002RC",
+                  "odoo_product_id": null
+                }
+              },
+              "sku": "PFM-EDGE-NANO",
+              "name": "PFM Isarsoft Server - Orin Nano 8GB - RC",
+              "capex": 1050,
+              "setupCost": 750,
+              "odoo_product_id": 18530,
+              "odoo_product_template_id": 15547,
+              "internal_reference": "PFMNL-PFM/14387",
+              "mappingComplete": true,
+              "selected_profile_is_smallest_sufficient": true,
+              "cameraCount": 2,
+              "quantity": 1
+            }
+          ],
+          "mappingComplete": true,
+          "unresolvedLocations": 0,
+          "validation": {
+            "validInput": true,
+            "supportedSegment": true,
+            "positiveCameraCounts": true,
+            "sufficientCapacity": true,
+            "smallestSufficientProfile": true
+          }
+        },
+        "mapping_complete": true,
+        "quote_note": "Server sized per physical location to the selected Isarsoft entrance channels; technical review remains required."
+      }
+    ],
+    "roi_output_rows": [
+      {
+        "Metric": "Stores",
+        "Value": 1,
+        "Context": "Retail chain input"
+      },
+      {
+        "Metric": "Daily footfall",
+        "Value": 1400,
+        "Context": "Per store, derived from weekly footfall / open days"
+      },
+      {
+        "Metric": "Weekly footfall",
+        "Value": 8400,
+        "Context": "Per store"
+      },
+      {
+        "Metric": "Conversion rate",
+        "Value": "18.0%",
+        "Context": "Baseline input"
+      },
+      {
+        "Metric": "ATV",
+        "Value": "€32",
+        "Context": "Average ticket value"
+      },
+      {
+        "Metric": "Gross margin",
+        "Value": "60%",
+        "Context": "Input"
+      },
+      {
+        "Metric": "Open days per week",
+        "Value": 6,
+        "Context": "ROI calculator logic"
+      },
+      {
+        "Metric": "Contract term",
+        "Value": "3 years",
+        "Context": "TCO horizon"
+      },
+      {
+        "Metric": "Footfall uplift",
+        "Value": "0.0%",
+        "Context": "What-if input"
+      },
+      {
+        "Metric": "Conversion uplift",
+        "Value": "0.0%",
+        "Context": "What-if input"
+      },
+      {
+        "Metric": "ATV uplift",
+        "Value": "0.0%",
+        "Context": "What-if input"
+      },
+      {
+        "Metric": "Saturday share",
+        "Value": "18.0%",
+        "Context": "Optional Saturday scenario"
+      },
+      {
+        "Metric": "Saturday boost",
+        "Value": "0.0%",
+        "Context": "Optional Saturday scenario"
+      },
+      {
+        "Metric": "Realisation factor",
+        "Value": "25%",
+        "Context": "Share of theoretical uplift captured"
+      },
+      {
+        "Metric": "Revenue / year",
+        "Value": "€2,515,968",
+        "Context": "Baseline for selected stores"
+      },
+      {
+        "Metric": "Theoretical uplift / year",
+        "Value": "€0",
+        "Context": "Maximum scenario versus baseline"
+      },
+      {
+        "Metric": "Theoretical extra profit / year",
+        "Value": "€0",
+        "Context": "Before realisation factor"
+      },
+      {
+        "Metric": "Realistic extra profit / year",
+        "Value": "€0",
+        "Context": "After realisation factor"
+      },
+      {
+        "Metric": "Total CAPEX",
+        "Value": "€3,550",
+        "Context": "All active solution components"
+      },
+      {
+        "Metric": "Monthly service total",
+        "Value": "€80",
+        "Context": "All active solution components"
+      },
+      {
+        "Metric": "Total cost of ownership",
+        "Value": "€6,430",
+        "Context": "3-year contract horizon"
+      },
+      {
+        "Metric": "Realistic payback time",
+        "Value": "n/a",
+        "Context": "Based on captured profit after subscription"
+      },
+      {
+        "Metric": "Realistic ROI over horizon",
+        "Value": "-100.0%",
+        "Context": "Net value: €-6,430"
+      }
+    ]
+  }
+}

@@ -12,6 +12,7 @@
 - Fixed the Retail Property Evidence Ladder layout on narrow browser widths
 - Added stakeholder-supplied Full OPEX sensor rates for Retail Chain and Retail Property, guarded pending rate-composition and quote-routing approval
 - Applied the approved Retail Property leak-to-minimum-package mapping
+- Added entity-specific Isarsoft server sizing, NL/UK processing-unit and server mappings, deterministic Odoo quantity rules, and explicit Isarsoft base/add-on payload modes
 
 ## v0.1
 
