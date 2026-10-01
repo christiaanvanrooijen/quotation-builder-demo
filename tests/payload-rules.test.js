@@ -25,16 +25,16 @@ const document = {
   createElement: element
 };
 const context = {
-  window: { scrollTo() {} }, document,
+  window: { PFM_ODOO_MAPPING_ENV: "test", scrollTo() {} }, document,
   sessionStorage: { getItem() { return null; }, setItem() {}, removeItem() {} },
   URL: { createObjectURL() { return "blob:fixture"; }, revokeObjectURL() {} }, Blob,
   NodeFilter: { SHOW_TEXT: 4 }, fetch: async () => ({ ok: false, status: 503 }), console, setTimeout, clearTimeout
 };
 vm.createContext(context);
 vm.runInContext(pricingSource, context);
-vm.runInContext(`${inlineSource}\nglobalThis.__api = { state, payload, commercialModelValidation, resolveOdooRouting, readInputs };`, context);
+vm.runInContext(`${inlineSource}\nglobalThis.__api = { state, payload, commercialModelValidation, resolveOdooRouting, readInputs, ipCameraPricing };`, context);
 
-const { state, payload, commercialModelValidation, resolveOdooRouting, readInputs } = context.__api;
+const { state, payload, commercialModelValidation, resolveOdooRouting, readInputs, ipCameraPricing } = context.__api;
 function configure(customerType, overrides = {}) {
   state.step = 6;
   state.lang = "EN";
@@ -87,7 +87,7 @@ function assertPlanRouting(result, expectedCount, companyId, operatingUnitId) {
 
 function assertRouting(name, operatingUnitType, companyId, operatingUnitId) {
   const routing = resolveOdooRouting(name, operatingUnitType);
-  assert.equal(routing.entityKey, name === "David Sturdy" ? "UK" : name === "Anna Reilander" ? "DE" : "NL");
+  assert.equal(routing.entityKey, name === "David Sturdy" ? "UK" : name === "Anna Reiländer" ? "DE" : "NL");
   assert.equal(routing.odooCompanyId, companyId);
   assert.equal(routing.operatingUnitId, operatingUnitId);
   assert.equal(routing.routingComplete, true);
@@ -98,8 +98,8 @@ assertRouting("Christiaan van Rooijen", "Shopping Centres", 2, 8);
 assertRouting("David Sturdy", "Shops", 7, 16);
 assertRouting("David Sturdy", "Shopping Centres", 7, 17);
 assertRouting("David Sturdy", "Fastfood", 7, 25);
-assertRouting("Anna Reilander", "Shops", 20, 99);
-assertRouting("Anna Reilander", "Shopping Centres", 20, 100);
+assertRouting("Anna Reiländer", "Shops", 20, 99);
+assertRouting("Anna Reiländer", "Shopping Centres", 20, 100);
 assert.notEqual(resolveOdooRouting("Christiaan van Rooijen", "Shops").odooCompanyId, resolveOdooRouting("David Sturdy", "Shops").odooCompanyId);
 
 const unresolvedRouting = resolveOdooRouting("Unknown salesperson", "Shops");
@@ -134,7 +134,7 @@ assert.equal(ukPropertyPayload.meta.operating_unit_id, 17);
 assert.equal(ukPropertyPayload.odoo_routing.company_id, 7);
 assert.equal(ukPropertyPayload.odoo_routing.operating_unit_id, 17);
 
-configure("Retail Chain", { preparedBy: "Anna Reilander", country: "UK" });
+configure("Retail Chain", { preparedBy: "Anna Reiländer", country: "UK" });
 const deShopsPayload = payload();
 assert.equal(deShopsPayload.meta.odoo_entity_key, "DE");
 assert.equal(deShopsPayload.meta.odoo_company_id, 20);
@@ -150,6 +150,8 @@ assert.equal(commercialModelValidation(unresolvedPayload).valid, false);
 assert.match(commercialModelValidation(unresolvedPayload).errors[0], /routing is unresolved/);
 
 configure("Retail Chain");
+const testEnvironmentQuantityRules = payload().odoo_line_quantity_rules;
+assert.equal(testEnvironmentQuantityRules.some(rule => [15554, 18241, 15555, 15553, 18386, 18449].includes(rule.product_id)), false);
 const nlRetailChainPlans = {};
 for (const commercialModel of ["capex_opex", "full_opex", "both"]) {
   state.commercialModel = commercialModel;
@@ -163,6 +165,40 @@ assert.deepEqual(Array.from(nlRetailChainPlans.both.quote_execution_plan.quotes,
   ["full_opex", "investment_base", "capex_for_opex"],
   ["full_opex", "subscription_package", "full_opex_subscription"]
 ]);
+
+for (const [segment, tiers] of Object.entries({
+  retailChain: [[0, "0-9", 425], [9, "0-9", 425], [10, "10-29", 380], [29, "10-29", 380], [30, "30-99", 350], [99, "30-99", 350], [100, "100+", 330]],
+  retailProperty: [[0, "0-9", 625], [9, "0-9", 625], [10, "10-29", 555], [29, "10-29", 555], [30, "30-99", 520], [99, "30-99", 520], [100, "100+", 485]]
+})) {
+  for (const [cameraCount, tier, unitPrice] of tiers) {
+    const pricing = ipCameraPricing(segment, cameraCount);
+    assert.equal(pricing.cameraCount, cameraCount);
+    assert.equal(pricing.tier, tier);
+    assert.equal(pricing.unitPrice, unitPrice);
+  }
+}
+
+configure("Retail Chain", { locations: 10, retailIsarsoftExistingNetwork: true });
+const retailChainReusedNetwork = payload();
+const retailChainReusedLine = retailChainReusedNetwork.sensor_lines.find(line => line.role === "entrance_performance");
+assert.equal(retailChainReusedNetwork.isarsoft.camera_count, 11);
+assert.equal(retailChainReusedNetwork.isarsoft.camera_hardware_count, 0);
+assert.equal(retailChainReusedNetwork.isarsoft.camera_price_capex, 380);
+assert.equal(retailChainReusedNetwork.isarsoft.camera_price_tier, "10-29");
+assert.equal(retailChainReusedNetwork.solution.entrance_sensor.capex_per_unit, 380);
+assert.equal(retailChainReusedLine.base_capex_per_unit, 380);
+assert.equal(retailChainReusedLine.net_capex_per_unit, 380);
+assert.equal(retailChainReusedLine.total_capex, 0);
+assert.equal(retailChainReusedLine.total_setup, 11 * 425);
+
+const retailPropertyTieredCamera = propertyPayload({ propertyReidCameras: 30 });
+const retailPropertyCameraLine = retailPropertyTieredCamera.sensor_lines.find(line => line.role === "reid_camera");
+assert.equal(retailPropertyTieredCamera.isarsoft.camera_price_capex, 520);
+assert.equal(retailPropertyTieredCamera.isarsoft.camera_price_tier, "30-99");
+assert.equal(retailPropertyCameraLine.base_capex_per_unit, 520);
+assert.equal(retailPropertyCameraLine.net_capex_per_unit, 520);
+assert.equal(retailPropertyCameraLine.total_capex, 30 * 520);
+assert.equal(retailPropertyCameraLine.total_setup, 30 * 550);
 
 configure("Retail Chain", { preparedBy: "David Sturdy", country: "UK", locations: 50 });
 state.commercialModel = "both";
@@ -187,7 +223,7 @@ state.commercialModel = "both";
 const nlRetailPropertyBoth = payload();
 assertPlanRouting(nlRetailPropertyBoth, 4, 2, 8);
 
-configure("Retail Chain", { preparedBy: "Anna Reilander", country: "DE" });
+configure("Retail Chain", { preparedBy: "Anna Reiländer", country: "DE" });
 state.commercialModel = "both";
 const deRetailChainBoth = payload();
 assert.equal(deRetailChainBoth.meta.odoo_company_id, 20);
@@ -196,7 +232,7 @@ assert.equal(deRetailChainBoth.quote_execution_plan.quotes.length, 4);
 assert.equal(deRetailChainBoth.quote_execution_plan.mapping_complete, false);
 assert.ok(deRetailChainBoth.quote_execution_plan.missing_mapping.length > 0);
 
-configure("Shopping Centre", { preparedBy: "Anna Reilander", country: "DE" });
+configure("Shopping Centre", { preparedBy: "Anna Reiländer", country: "DE" });
 state.commercialModel = "both";
 const deRetailPropertyBoth = payload();
 assert.equal(deRetailPropertyBoth.meta.odoo_company_id, 20);

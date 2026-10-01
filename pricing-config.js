@@ -26,8 +26,7 @@ window.PFM_PRICING = {
 
   // ═══════════════════════════════════════════════════════════════════════════
   // SECTION 1: PACKAGE PRICING MATRIX
-  // Monthly subscription per sensor, by segment × technology × tier
-  // BEFORE volume discount (see Section 15)
+  // Legacy base rates retained for compatibility with older payloads.
   // ═══════════════════════════════════════════════════════════════════════════
   packagePricing: {
     retailChain: {
@@ -40,6 +39,42 @@ window.PFM_PRICING = {
     },
     unit: "EUR_per_sensor_per_month",
     status: "confirmed"
+  },
+
+  // Contract-term package subscription prices supplied by the stakeholder.
+  // These are final prices per billable sensor per month. Do not apply the
+  // legacy volumeDiscount. Retail Chain is complete; Retail Property remains
+  // on the legacy matrix until its remaining term/technology ambiguity is
+  // resolved.
+  contractPackagePricing: {
+    unit: "EUR_per_billable_sensor_per_month",
+    status: "confirmed",
+    retailChain: {
+      "3D": {
+        3: {
+          essential: { "1-9": 30, "10-29": 29, "30-99": 28, "100+": 26 },
+          professional: { "1-9": 40, "10-29": 39, "30-99": 37, "100+": 36 },
+          enterprise: { "1-9": 80, "10-29": 77, "30-99": 74, "100+": 71 }
+        },
+        5: {
+          essential: { "1-9": 25, "10-29": 24, "30-99": 23, "100+": 22 },
+          professional: { "1-9": 35, "10-29": 34, "30-99": 33, "100+": 31 },
+          enterprise: { "1-9": 70, "10-29": 68, "30-99": 65, "100+": 63 }
+        }
+      },
+      IP: {
+        3: {
+          essential: { "1-9": 30, "10-29": 27, "30-99": 26, "100+": 25 },
+          professional: { "1-9": 41, "10-29": 38, "30-99": 36, "100+": 35 },
+          enterprise: { "1-9": 62, "10-29": 58, "30-99": 55, "100+": 52 }
+        },
+        5: {
+          essential: { "1-9": 21, "10-29": 19, "30-99": 18, "100+": 17 },
+          professional: { "1-9": 30, "10-29": 28, "30-99": 26, "100+": 24 },
+          enterprise: { "1-9": 53, "10-29": 49, "30-99": 46, "100+": 43 }
+        }
+      }
+    }
   },
 
   // Full OPEX monthly hardware lease rates supplied by the stakeholder. The
@@ -332,50 +367,50 @@ window.PFM_PRICING = {
     }
   },
 
-  // Odoo template catalogue supplied 2026-07-24. Builder IDs are the stable
-  // references sent by the app; test and production IDs support n8n routing.
+  // Production IDs: September 2026 quotation-template workbook, NL tab.
+  // Builder IDs remain stable across Odoo environments.
   odooTemplateCatalog: {
     retailChain: {
       capex: {
-        tpl_rc_footfall_essential_premium: { configurationId: "RC_FOOTFALL", builderConfig: "NL_QB_Footfall_Essential_Xovis", testId: 203, productionId: null },
-        tpl_rc_footfall_essential_basic: { configurationId: "RC_FOOTFALL", builderConfig: "NL_QB_Footfall_Essentials_Milesight", testId: 206, productionId: null },
-        tpl_rc_footfall_professional_premium: { configurationId: "RC_FOOTFALL", builderConfig: "NL_QB_Footfall_Professional_Xovis", testId: 204, productionId: null },
-        tpl_rc_footfall_professional_basic: { configurationId: "RC_FOOTFALL", builderConfig: "NL_QB_Footfall_Professional_Milesight", testId: 207, productionId: null },
-        tpl_rc_footfall_professional_enterprise: { configurationId: "RC_FOOTFALL", builderConfig: "NL_QB_Footfall_Enterprise_Xovis", testId: 209, productionId: null },
-        tpl_rc_footfall_capture_professional_premium: { configurationId: "RC_FOOTFALL_CAPTURE", builderConfig: "NL_QB_Footfall_Passersby_Professional_Xovis", testId: 205, productionId: null },
-        tpl_rc_footfall_capture_professional_basic: { configurationId: "RC_FOOTFALL_CAPTURE", builderConfig: "NL_QB_Footfall_Passersby_Professional_Milesight", testId: 208, productionId: null },
-        tpl_rc_footfall_capture_enterprise: { configurationId: "RC_FOOTFALL_CAPTURE", builderConfig: "NL_QB_Footfall_Passersby_Enterprise_Xovis", testId: 210, productionId: null },
-        tpl_rc_footfall_tracking_enterprise: { configurationId: "RC_FOOTFALL_TRACKING", builderConfig: "NL_QB_Footfall_Tracking_Enterprise_Xovis", testId: 211, productionId: null },
-        tpl_rc_footfall_capture_tracking_enterprise: { configurationId: "RC_FOOTFALL_CAPTURE_TRACKING", builderConfig: "NL_QB_Footfall_Passersby_Tracking_Enterprise_Xovis", testId: 212, productionId: null },
-          tpl_rc_footfall_essential_isarsoft: { configurationId: "RC_FOOTFALL", builderConfig: "NL_QB_Footfall_Essentials_Isarsoft_Retail", testId: 266, productionId: null },
-          tpl_rc_footfall_professional_isarsoft: { configurationId: "RC_FOOTFALL", builderConfig: "NL_QB_Footfall_Professional_Isarsoft_Retail", testId: 272, productionId: null },
-          tpl_rc_footfall_enterprise_isarsoft: { configurationId: "RC_FOOTFALL", builderConfig: "NL_QB_Footfall_Enterprise_Isarsoft_Retail", testId: 273, productionId: null },
-        tpl_rc_footfall_capture_professional_isarsoft: { configurationId: "RC_FOOTFALL_CAPTURE", builderConfig: "NL_QB_Footfall_Passersby_Professional_Isarsoft_Retail", testId: 268, productionId: null },
-        tpl_rc_instore_lidar: { configurationId: null, builderConfig: "NL_QB_Addon_Tracking_Enterprise_Xovis", testId: 213, productionId: null },
-        tpl_rc_instore_3d: { configurationId: null, builderConfig: "NL_QB_Addon_Tracking_Enterprise_LiDAR", testId: 214, productionId: null }
+        tpl_rc_footfall_essential_premium: { configurationId: "RC_FOOTFALL", builderConfig: "NL_QB_Footfall_Essential_Xovis", testId: 203, productionId: 429 },
+        tpl_rc_footfall_essential_basic: { configurationId: "RC_FOOTFALL", builderConfig: "NL_QB_Footfall_Essential_Milesight", testId: 206, productionId: 432 },
+        tpl_rc_footfall_professional_premium: { configurationId: "RC_FOOTFALL", builderConfig: "NL_QB_Footfall_Professional_Xovis", testId: 204, productionId: 430 },
+        tpl_rc_footfall_professional_basic: { configurationId: "RC_FOOTFALL", builderConfig: "NL_QB_Footfall_Professional_Milesight", testId: 207, productionId: 433 },
+        tpl_rc_footfall_professional_enterprise: { configurationId: "RC_FOOTFALL", builderConfig: "NL_QB_Footfall_Enterprise_Xovis", testId: 209, productionId: 435 },
+        tpl_rc_footfall_capture_professional_premium: { configurationId: "RC_FOOTFALL_CAPTURE", builderConfig: "NL_QB_Footfall_Passersby_Professional_Xovis", testId: 205, productionId: 431 },
+        tpl_rc_footfall_capture_professional_basic: { configurationId: "RC_FOOTFALL_CAPTURE", builderConfig: "NL_QB_Footfall_Passersby_Professional_Milesight", testId: 208, productionId: 434 },
+        tpl_rc_footfall_capture_enterprise: { configurationId: "RC_FOOTFALL_CAPTURE", builderConfig: "NL_QB_Footfall_Passersby_Enterprise_Xovis", testId: 210, productionId: 436 },
+        tpl_rc_footfall_tracking_enterprise: { configurationId: "RC_FOOTFALL_TRACKING", builderConfig: "NL_QB_Footfall_Tracking_Enterprise_Xovis", testId: 211, productionId: 437 },
+        tpl_rc_footfall_capture_tracking_enterprise: { configurationId: "RC_FOOTFALL_CAPTURE_TRACKING", builderConfig: "NL_QB_Footfall_Passersby_Tracking_Enterprise_Xovis", testId: 212, productionId: 438 },
+          tpl_rc_footfall_essential_isarsoft: { configurationId: "RC_FOOTFALL", builderConfig: "NL_QB_Footfall_Essential_Isarsoft", testId: 266, productionId: 457 },
+          tpl_rc_footfall_professional_isarsoft: { configurationId: "RC_FOOTFALL", builderConfig: "NL_QB_Footfall_Professional_Isarsoft", testId: 272, productionId: 458 },
+          tpl_rc_footfall_enterprise_isarsoft: { configurationId: "RC_FOOTFALL", builderConfig: "NL_QB_Footfall_Enterprise_Isarsoft", testId: 273, productionId: 460 },
+        tpl_rc_footfall_capture_professional_isarsoft: { configurationId: "RC_FOOTFALL_CAPTURE", builderConfig: "NL_QB_Footfall_Passersby_Professional_Isarsoft", testId: 268, productionId: 461 },
+        tpl_rc_instore_lidar: { configurationId: null, builderConfig: "NL_QB_Addon_Tracking_Enterprise_LiDAR", testId: 214, productionId: 440 },
+        tpl_rc_instore_3d: { configurationId: null, builderConfig: "NL_QB_Addon_Tracking_Enterprise_Xovis", testId: 213, productionId: 439 }
       },
       opex: {
-        essential: { builderConfig: "NL_QB_Essential_Retail_Package", testId: 215, productionId: null },
-        professional: { builderConfig: "NL_QB_Professional_Retail_Package", testId: 216, productionId: null },
-        enterprise: { builderConfig: "NL_QB_Enterprise_Retail_Package", testId: 217, productionId: null },
-        instore_lidar: { builderConfig: "NL_QB_Enterprise_Retail_Package_Addon-LiDAR", testId: 219, productionId: null },
-        instore_3d: { builderConfig: "NL_QB_Enterprise_Retail_Package_Addon-Xovis", testId: 218, productionId: null }
+        essential: { builderConfig: "NL_QB_Essential_Retail_Package", testId: 215, productionId: 441 },
+        professional: { builderConfig: "NL_QB_Professional_Retail_Package", testId: 216, productionId: 442 },
+        enterprise: { builderConfig: "NL_QB_Enterprise_Retail_Package", testId: 217, productionId: 443 },
+        instore_lidar: { builderConfig: "NL_QB_Enterprise_Retail_Package_Addon-LiDAR", testId: 219, productionId: 445 },
+        instore_3d: { builderConfig: "NL_QB_Enterprise_Retail_Package_Addon-Xovis", testId: 218, productionId: 444 }
       },
       fullOpex: {
         capexForOpex: {
-          xovis: { builderConfig: "NL_QB_Footfall_Intel-5YR_CAPEX_Retail", testId: 225, productionId: null },
-          milesight: { builderConfig: "NL_QB_Footfall_Intel-5YR_CAPEX_Retail", testId: 225, productionId: null }
+          xovis: { builderConfig: "NL_QB_Footfall_Intel-5YR_CAPEX_Retail", testId: 225, productionId: 455 },
+          milesight: { builderConfig: "NL_QB_Footfall_Intel-5YR_CAPEX_Retail", testId: 225, productionId: 455 }
         },
         packages: {
           milesight: {
-            essential: { builderConfig: "NL_QB_Essential_INTEL-5YR_Retail", testId: 221, productionId: null },
-            professional: { builderConfig: "NL_QB_Professional_INTEL-5YR_Retail", testId: 223, productionId: null },
-            enterprise: { builderConfig: "NL_QB_Enterprise_INTEL-5YR_Retail", testId: 224, productionId: null }
+            essential: { builderConfig: "NL_QB_Essential_INTEL-5YR_Retail", testId: 221, productionId: 449 },
+            professional: { builderConfig: "NL_QB_Professional_INTEL-5YR_Retail", testId: 223, productionId: 450 },
+            enterprise: { builderConfig: "NL_QB_Enterprise_INTEL-5YR_Retail", testId: 224, productionId: 451 }
           },
           xovis: {
-            essential: { builderConfig: "NL_QB_Essential_INTEL-5YR_Retail", testId: 221, productionId: null },
-            professional: { builderConfig: "NL_QB_Professional_INTEL-5YR_Retail", testId: 223, productionId: null },
-            enterprise: { builderConfig: "NL_QB_Enterprise_INTEL-5YR_Retail", testId: 224, productionId: null }
+            essential: { builderConfig: "NL_QB_Essential_INTEL-5YR_Retail", testId: 221, productionId: 449 },
+            professional: { builderConfig: "NL_QB_Professional_INTEL-5YR_Retail", testId: 223, productionId: 450 },
+            enterprise: { builderConfig: "NL_QB_Enterprise_INTEL-5YR_Retail", testId: 224, productionId: 451 }
           }
         }
       }
@@ -385,26 +420,26 @@ window.PFM_PRICING = {
         tpl_rp_reid_capex: { configurationId: "RP_REID_CAPEX", builderConfig: "NL_QB_Addon_Tracking_Exterprise_Re-ID", testId: 261, productionId: null }
       },
       opex: {
-        essential: { builderConfig: "NL_QB_Essential_Package_Retail_Property", testId: 258, productionId: null },
-        professional: { builderConfig: "NL_QB_Professional_Package_Retail_Property", testId: 259, productionId: null },
-        enterprise: { builderConfig: "NL_QB_Enterprise_Package_Retail_Property", testId: 260, productionId: null },
+        essential: { builderConfig: "NL_QB_Essential_Retail_Property_Package", testId: 258, productionId: 446 },
+        professional: { builderConfig: "NL_QB_Professional_Retail_Property_Package", testId: 259, productionId: 447 },
+        enterprise: { builderConfig: "NL_QB_Enterprise_Retail_Property_Package", testId: 260, productionId: 448 },
         reid_addon: { builderConfig: "NL_QB_Enterprise_Retail_Package_Addon_Re-ID", testId: 265, productionId: null }
       },
       fullOpex: {
         capexForOpex: {
-          xovis: { builderConfig: "NL_QB_Footfall_Intel-5YR_CAPEX_Retail_Property", testId: 254, productionId: null },
-          milesight: { builderConfig: "NL_QB_Footfall_Intel-5YR_CAPEX_Retail_Property", testId: 254, productionId: null }
+          xovis: { builderConfig: "NL_QB_Footfall_Intel-5YR_CAPEX_Retail_Property", testId: 254, productionId: 456 },
+          milesight: { builderConfig: "NL_QB_Footfall_Intel-5YR_CAPEX_Retail_Property", testId: 254, productionId: 456 }
         },
         packages: {
           milesight: {
-            essential: { builderConfig: "NL_QB_Essential_INTEL-5YR_Retail_Property", testId: 255, productionId: null },
-            professional: { builderConfig: "NL_QB_Professional_INTEL-5YR_Retail_Property", testId: 256, productionId: null },
-            enterprise: { builderConfig: "NL_QB_Enterprise_INTEL-5YR_Retail_Property", testId: 257, productionId: null }
+            essential: { builderConfig: "NL_QB_Essential_INTEL-5YR_Retail_Property", testId: 255, productionId: 452 },
+            professional: { builderConfig: "NL_QB_Professional_INTEL-5YR_Retail_Property", testId: 256, productionId: 453 },
+            enterprise: { builderConfig: "NL_QB_Enterprise_INTEL-5YR_Retail_Property", testId: 257, productionId: 454 }
           },
           xovis: {
-            essential: { builderConfig: "NL_QB_Essential_INTEL-5YR_Retail_Property", testId: 255, productionId: null },
-            professional: { builderConfig: "NL_QB_Professional_INTEL-5YR_Retail_Property", testId: 256, productionId: null },
-            enterprise: { builderConfig: "NL_QB_Enterprise_INTEL-5YR_Retail_Property", testId: 257, productionId: null }
+            essential: { builderConfig: "NL_QB_Essential_INTEL-5YR_Retail_Property", testId: 255, productionId: 452 },
+            professional: { builderConfig: "NL_QB_Professional_INTEL-5YR_Retail_Property", testId: 256, productionId: 453 },
+            enterprise: { builderConfig: "NL_QB_Enterprise_INTEL-5YR_Retail_Property", testId: 257, productionId: 454 }
           }
         }
       }
@@ -428,51 +463,50 @@ window.PFM_PRICING = {
     }
   },
 
-  // Entity-aware Odoo placeholders for Phase A. NL continues to use the proven
-  // legacy catalogue above; UK/DE must be filled before testing those entities.
+  // Production IDs: September 2026 quotation-template workbook, UK/DE tabs.
   odooTemplateCatalogByEntity: {
     UK: {
       retailChain: {
         capex: {
-          tpl_rc_footfall_essential_premium: { configurationId: "RC_FOOTFALL", builderConfig: "UK_QB_Footfall_Essential_Xovis", testId: 226, productionId: null },
-          tpl_rc_footfall_essential_basic: { configurationId: "RC_FOOTFALL", builderConfig: "UK_QB_Footfall_Essentials_Milesight", testId: 233, productionId: null },
-          tpl_rc_footfall_professional_premium: { configurationId: "RC_FOOTFALL", builderConfig: "UK_QB_Footfall_Professional_Xovis", testId: 227, productionId: null },
-          tpl_rc_footfall_professional_basic: { configurationId: "RC_FOOTFALL", builderConfig: "UK_QB_Footfall_Professional_Milesight", testId: 234, productionId: null },
-          tpl_rc_footfall_professional_enterprise: { configurationId: "RC_FOOTFALL", builderConfig: "UK_QB_Footfall_Enterprise_Xovis", testId: 228, productionId: null },
-          tpl_rc_footfall_capture_professional_premium: { configurationId: "RC_FOOTFALL_CAPTURE", builderConfig: "UK_QB_Footfall_Passersby_Professional_Xovis", testId: 229, productionId: null },
-          tpl_rc_footfall_capture_professional_basic: { configurationId: "RC_FOOTFALL_CAPTURE", builderConfig: "UK_QB_Footfall_Passersby_Professional_Milesight", testId: 235, productionId: null },
-          tpl_rc_footfall_capture_enterprise: { configurationId: "RC_FOOTFALL_CAPTURE", builderConfig: "UK_QB_Footfall_Passersby_Enterprise_Xovis", testId: 230, productionId: null },
-          tpl_rc_footfall_tracking_enterprise: { configurationId: "RC_FOOTFALL_TRACKING", builderConfig: "UK_QB_Footfall_Tracking_Enterprise_Xovis", testId: 232, productionId: null },
-          tpl_rc_footfall_capture_tracking_enterprise: { configurationId: "RC_FOOTFALL_CAPTURE_TRACKING", builderConfig: "UK_QB_Footfall_Passersby_Tracking_Enterprise_Xovis", testId: 231, productionId: null },
-          tpl_rc_footfall_essential_isarsoft: { configurationId: "RC_FOOTFALL", builderConfig: "UK_QB_Footfall_Essentials_Isarsoft", testId: 269, productionId: null },
-          tpl_rc_footfall_professional_isarsoft: { configurationId: "RC_FOOTFALL", builderConfig: "UK_QB_Footfall_Professional_Isarsoft", testId: 274, productionId: null },
-          tpl_rc_footfall_enterprise_isarsoft: { configurationId: "RC_FOOTFALL", builderConfig: "UK_QB_Footfall_Enterprise_Isarsoft", testId: 275, productionId: null },
-          tpl_rc_footfall_capture_professional_isarsoft: { configurationId: "RC_FOOTFALL_CAPTURE", builderConfig: "UK_QB_Footfall_Passersby_Professional_Isarsoft", testId: 271, productionId: null },
-          tpl_rc_instore_lidar: { configurationId: null, builderConfig: "UK_QB_Addon_Tracking_Enterprise_Xovis", testId: 236, productionId: null },
-          tpl_rc_instore_3d: { configurationId: null, builderConfig: "UK_QB_Addon_Tracking_Enterprise_LiDAR", testId: 237, productionId: null }
+          tpl_rc_footfall_essential_premium: { configurationId: "RC_FOOTFALL", builderConfig: "UK_QB_Footfall_Essential_Xovis", testId: 226, productionId: 792 },
+          tpl_rc_footfall_essential_basic: { configurationId: "RC_FOOTFALL", builderConfig: "UK_QB_Footfall_Essentials_Milesight", testId: 233, productionId: 795 },
+          tpl_rc_footfall_professional_premium: { configurationId: "RC_FOOTFALL", builderConfig: "UK_QB_Footfall_Professional_Xovis", testId: 227, productionId: 793 },
+          tpl_rc_footfall_professional_basic: { configurationId: "RC_FOOTFALL", builderConfig: "UK_QB_Footfall_Professional_Milesight", testId: 234, productionId: 796 },
+          tpl_rc_footfall_professional_enterprise: { configurationId: "RC_FOOTFALL", builderConfig: "UK_QB_Footfall_Enterprise_Xovis", testId: 228, productionId: 798 },
+          tpl_rc_footfall_capture_professional_premium: { configurationId: "RC_FOOTFALL_CAPTURE", builderConfig: "UK_QB_Footfall_Passersby_Professional_Xovis", testId: 229, productionId: 794 },
+          tpl_rc_footfall_capture_professional_basic: { configurationId: "RC_FOOTFALL_CAPTURE", builderConfig: "UK_QB_Footfall_Passersby_Professional_Milesight", testId: 235, productionId: 797 },
+          tpl_rc_footfall_capture_enterprise: { configurationId: "RC_FOOTFALL_CAPTURE", builderConfig: "UK_QB_Footfall_Passersby_Enterprise_Xovis", testId: 230, productionId: 799 },
+          tpl_rc_footfall_tracking_enterprise: { configurationId: "RC_FOOTFALL_TRACKING", builderConfig: "UK_QB_Footfall_Tracking_Enterprise_Xovis", testId: 232, productionId: 800 },
+          tpl_rc_footfall_capture_tracking_enterprise: { configurationId: "RC_FOOTFALL_CAPTURE_TRACKING", builderConfig: "UK_QB_Footfall_Passersby_Tracking_Enterprise_Xovis", testId: 231, productionId: 801 },
+          tpl_rc_footfall_essential_isarsoft: { configurationId: "RC_FOOTFALL", builderConfig: "UK_QB_Footfall_Essentials_Isarsoft", testId: 269, productionId: 820 },
+          tpl_rc_footfall_professional_isarsoft: { configurationId: "RC_FOOTFALL", builderConfig: "UK_QB_Footfall_Professional_Isarsoft", testId: 274, productionId: 821 },
+          tpl_rc_footfall_enterprise_isarsoft: { configurationId: "RC_FOOTFALL", builderConfig: "UK_QB_Footfall_Enterprise_Isarsoft", testId: 275, productionId: 823 },
+          tpl_rc_footfall_capture_professional_isarsoft: { configurationId: "RC_FOOTFALL_CAPTURE", builderConfig: "UK_QB_Footfall_Passersby_Professional_Isarsoft", testId: 271, productionId: 824 },
+          tpl_rc_instore_lidar: { configurationId: null, builderConfig: "UK_QB_Addon_Tracking_Enterprise_LiDAR", testId: 237, productionId: 803 },
+          tpl_rc_instore_3d: { configurationId: null, builderConfig: "UK_QB_Addon_Tracking_Enterprise_Xovis", testId: 236, productionId: 802 }
         },
         opex: {
-          essential: { builderConfig: "UK_QB_Essential_Retail_Package", testId: 238, productionId: null },
-          professional: { builderConfig: "UK_QB_Professional_Retail_Package", testId: 240, productionId: null },
-          enterprise: { builderConfig: "UK_QB_Enterprise_Retail_Package", testId: 243, productionId: null },
-          instore_lidar: { builderConfig: "UK_QB_Enterprise_Retail_Package_Addon-LiDAR", testId: 244, productionId: null },
-          instore_3d: { builderConfig: "UK_QB_Enterprise_Retail_Package_Addon-Xovis", testId: 245, productionId: null }
+          essential: { builderConfig: "UK_QB_Essential_Retail_Package", testId: 238, productionId: 804 },
+          professional: { builderConfig: "UK_QB_Professional_Retail_Package", testId: 240, productionId: 805 },
+          enterprise: { builderConfig: "UK_QB_Enterprise_Retail_Package", testId: 243, productionId: 806 },
+          instore_lidar: { builderConfig: "UK_QB_Enterprise_Retail_Package_Addon-LiDAR", testId: 244, productionId: 808 },
+          instore_3d: { builderConfig: "UK_QB_Enterprise_Retail_Package_Addon-Xovis", testId: 245, productionId: 807 }
         },
         fullOpex: {
           capexForOpex: {
-            xovis: { builderConfig: "UK_QB_Footfall_Intel-5YR_CAPEX_Retail", testId: 249, productionId: null },
-            milesight: { builderConfig: "UK_QB_Footfall_Intel-5YR_CAPEX_Retail", testId: 249, productionId: null }
+            xovis: { builderConfig: "UK_QB_Footfall_Intel-5YR_CAPEX_Retail", testId: 249, productionId: 818 },
+            milesight: { builderConfig: "UK_QB_Footfall_Intel-5YR_CAPEX_Retail", testId: 249, productionId: 818 }
           },
           packages: {
             milesight: {
-              essential: { builderConfig: "UK_QB_Essential_INTEL-5YR_Retail", testId: 248, productionId: null },
-              professional: { builderConfig: "UK_QB_Professional_INTEL-5YR_Retail", testId: 247, productionId: null },
-              enterprise: { builderConfig: "UK_QB_Enterprise_INTEL-5YR_Retail", testId: 246, productionId: null }
+              essential: { builderConfig: "UK_QB_Essential_INTEL-5YR_Retail", testId: 248, productionId: 812 },
+              professional: { builderConfig: "UK_QB_Professional_INTEL-5YR_Retail", testId: 247, productionId: 813 },
+              enterprise: { builderConfig: "UK_QB_Enterprise_INTEL-5YR_Retail", testId: 246, productionId: 814 }
             },
             xovis: {
-              essential: { builderConfig: "UK_QB_Essential_INTEL-5YR_Retail", testId: 248, productionId: null },
-              professional: { builderConfig: "UK_QB_Professional_INTEL-5YR_Retail", testId: 247, productionId: null },
-              enterprise: { builderConfig: "UK_QB_Enterprise_INTEL-5YR_Retail", testId: 246, productionId: null }
+              essential: { builderConfig: "UK_QB_Essential_INTEL-5YR_Retail", testId: 248, productionId: 812 },
+              professional: { builderConfig: "UK_QB_Professional_INTEL-5YR_Retail", testId: 247, productionId: 813 },
+              enterprise: { builderConfig: "UK_QB_Enterprise_INTEL-5YR_Retail", testId: 246, productionId: 814 }
             }
           }
         }
@@ -482,26 +516,26 @@ window.PFM_PRICING = {
           tpl_rp_reid_capex: { configurationId: "RP_REID_CAPEX", builderConfig: "UK_QB_Addon_Tracking_Exterprise_Re-ID", testId: 263, productionId: null }
         },
         opex: {
-          essential: { builderConfig: "UK_QB_Essential_Retail_Property_Package", testId: 239, productionId: null },
-          professional: { builderConfig: "UK_QB_Professional_Property_Package", testId: 241, productionId: null },
-          enterprise: { builderConfig: "UK_QB_Enterprise_Retail_Property_Package", testId: 242, productionId: null },
+          essential: { builderConfig: "UK_QB_Essential_Retail_Property_Package", testId: 239, productionId: 809 },
+          professional: { builderConfig: "UK_QB_Professional_Retail_Property_Package", testId: 241, productionId: 810 },
+          enterprise: { builderConfig: "UK_QB_Enterprise_Retail_Property_Package", testId: 242, productionId: 811 },
           reid_addon: { builderConfig: "UK_QB_Enterprise_Retail_Package_Addon_Re-ID", testId: 264, productionId: null }
         },
         fullOpex: {
           capexForOpex: {
-            xovis: { builderConfig: "UK_QB_Footfall_Intel-5YR_CAPEX_Retail_Property", testId: 253, productionId: null },
-            milesight: { builderConfig: "UK_QB_Footfall_Intel-5YR_CAPEX_Retail_Property", testId: 253, productionId: null }
+            xovis: { builderConfig: "UK_QB_Footfall_Intel-5YR_CAPEX_Retail_Property", testId: 253, productionId: 819 },
+            milesight: { builderConfig: "UK_QB_Footfall_Intel-5YR_CAPEX_Retail_Property", testId: 253, productionId: 819 }
           },
           packages: {
             milesight: {
-              essential: { builderConfig: "UK_QB_Essential_INTEL-5YR_Retail_Property", testId: 250, productionId: null },
-              professional: { builderConfig: "UK_QB_Professional_INTEL-5YR_Retail_Property", testId: 251, productionId: null },
-              enterprise: { builderConfig: "UK_QB_Enterprise_INTEL-5YR_Retail_Property", testId: 252, productionId: null }
+              essential: { builderConfig: "UK_QB_Essential_INTEL-5YR_Retail_Property", testId: 250, productionId: 815 },
+              professional: { builderConfig: "UK_QB_Professional_INTEL-5YR_Retail_Property", testId: 251, productionId: 816 },
+              enterprise: { builderConfig: "UK_QB_Enterprise_INTEL-5YR_Retail_Property", testId: 252, productionId: 817 }
             },
             xovis: {
-              essential: { builderConfig: "UK_QB_Essential_INTEL-5YR_Retail_Property", testId: 250, productionId: null },
-              professional: { builderConfig: "UK_QB_Professional_INTEL-5YR_Retail_Property", testId: 251, productionId: null },
-              enterprise: { builderConfig: "UK_QB_Enterprise_INTEL-5YR_Retail_Property", testId: 252, productionId: null }
+              essential: { builderConfig: "UK_QB_Essential_INTEL-5YR_Retail_Property", testId: 250, productionId: 815 },
+              professional: { builderConfig: "UK_QB_Professional_INTEL-5YR_Retail_Property", testId: 251, productionId: 816 },
+              enterprise: { builderConfig: "UK_QB_Enterprise_INTEL-5YR_Retail_Property", testId: 252, productionId: 817 }
             }
           }
         }
@@ -510,41 +544,45 @@ window.PFM_PRICING = {
     DE: {
       retailChain: {
         capex: {
-          tpl_rc_footfall_essential_premium: { configurationId: "RC_FOOTFALL", builderConfig: "DE_QB_Footfall_Essential_Xovis_Retail", testId: null, productionId: null },
-          tpl_rc_footfall_essential_basic: { configurationId: "RC_FOOTFALL", builderConfig: "DE_QB_Footfall_Essentials_Milesight_Retail", testId: null, productionId: null },
-          tpl_rc_footfall_professional_premium: { configurationId: "RC_FOOTFALL", builderConfig: "DE_QB_Footfall_Professional_Xovis_Retail", testId: null, productionId: null },
-          tpl_rc_footfall_professional_basic: { configurationId: "RC_FOOTFALL", builderConfig: "DE_QB_Footfall_Professional_Milesight_Retail", testId: null, productionId: null },
-          tpl_rc_footfall_professional_enterprise: { configurationId: "RC_FOOTFALL", builderConfig: "DE_QB_Footfall_Enterprise_Xovis_Retail", testId: null, productionId: null },
-          tpl_rc_footfall_capture_professional_premium: { configurationId: "RC_FOOTFALL_CAPTURE", builderConfig: "DE_QB_Footfall_Passersby_Professional_Xovis_Retail", testId: null, productionId: null },
-          tpl_rc_footfall_capture_professional_basic: { configurationId: "RC_FOOTFALL_CAPTURE", builderConfig: "DE_QB_Footfall_Passersby_Professional_Milesight_Retail", testId: null, productionId: null },
-          tpl_rc_footfall_capture_enterprise: { configurationId: "RC_FOOTFALL_CAPTURE", builderConfig: "DE_QB_Footfall_Passersby_Enterprise_Xovis_Retail", testId: null, productionId: null },
-          tpl_rc_footfall_tracking_enterprise: { configurationId: "RC_FOOTFALL_TRACKING", builderConfig: "DE_QB_Footfall_Tracking_Enterprise_Xovis_Retail", testId: null, productionId: null },
-          tpl_rc_footfall_capture_tracking_enterprise: { configurationId: "RC_FOOTFALL_CAPTURE_TRACKING", builderConfig: "DE_QB_Footfall_Passersby_Tracking_Enterprise_Xovis_Retail", testId: null, productionId: null },
-          tpl_rc_instore_lidar: { configurationId: null, builderConfig: "DE_QB_Addon_Tracking_Enterprise_Xovis", testId: null, productionId: null },
-          tpl_rc_instore_3d: { configurationId: null, builderConfig: "DE_QB_Addon_Tracking_Enterprise_LiDAR", testId: null, productionId: null }
+          tpl_rc_footfall_essential_premium: { configurationId: "RC_FOOTFALL", builderConfig: "DE_QB_Footfall_Essential_Xovis", testId: null, productionId: 660 },
+          tpl_rc_footfall_essential_basic: { configurationId: "RC_FOOTFALL", builderConfig: "DE_QB_Footfall_Essential_Milesight", testId: null, productionId: 663 },
+          tpl_rc_footfall_essential_isarsoft: { configurationId: "RC_FOOTFALL", builderConfig: "DE_QB_Footfall_Essential_Isarsoft", testId: null, productionId: 688 },
+          tpl_rc_footfall_professional_premium: { configurationId: "RC_FOOTFALL", builderConfig: "DE_QB_Footfall_Professional_Xovis", testId: null, productionId: 661 },
+          tpl_rc_footfall_professional_basic: { configurationId: "RC_FOOTFALL", builderConfig: "DE_QB_Footfall_Professional_Milesight", testId: null, productionId: 664 },
+          tpl_rc_footfall_professional_isarsoft: { configurationId: "RC_FOOTFALL", builderConfig: "DE_QB_Footfall_Professional_Isarsoft", testId: null, productionId: 689 },
+          tpl_rc_footfall_professional_enterprise: { configurationId: "RC_FOOTFALL", builderConfig: "DE_QB_Footfall_Exterprise_Xovis", testId: null, productionId: 666 },
+          tpl_rc_footfall_enterprise_isarsoft: { configurationId: "RC_FOOTFALL", builderConfig: "DE_QB_Footfall_Enterprise_Isarsoft", testId: null, productionId: 691 },
+          tpl_rc_footfall_capture_professional_premium: { configurationId: "RC_FOOTFALL_CAPTURE", builderConfig: "DE_QB_Footfall_Passersby_Professional_Xovis", testId: null, productionId: 662 },
+          tpl_rc_footfall_capture_professional_basic: { configurationId: "RC_FOOTFALL_CAPTURE", builderConfig: "DE_QB_Footfall_Passersby_Professional_Milesight", testId: null, productionId: 665 },
+          tpl_rc_footfall_capture_professional_isarsoft: { configurationId: "RC_FOOTFALL_CAPTURE", builderConfig: "DE_QB_Footfall_Passersby_Professional_Isarsoft", testId: null, productionId: 692 },
+          tpl_rc_footfall_capture_enterprise: { configurationId: "RC_FOOTFALL_CAPTURE", builderConfig: "DE_QB_Footfall_Passerby_Exterprise_Xovis", testId: null, productionId: 667 },
+          tpl_rc_footfall_tracking_enterprise: { configurationId: "RC_FOOTFALL_TRACKING", builderConfig: "DE_QB_Footfall_Tracking_Exterprise_Xovis", testId: null, productionId: 668 },
+          tpl_rc_footfall_capture_tracking_enterprise: { configurationId: "RC_FOOTFALL_CAPTURE_TRACKING", builderConfig: "DE_QB_Footfall_Passerby_Tracking_Exterprise_Xovis", testId: null, productionId: 669 },
+          tpl_rc_instore_lidar: { configurationId: null, builderConfig: "DE_QB_Addon_Tracking_Exterprise_LiDAR", testId: null, productionId: 671 },
+          tpl_rc_instore_3d: { configurationId: null, builderConfig: "DE_QB_Addon_Tracking_Exterprise_Xovis", testId: null, productionId: 670 }
         },
         opex: {
-          essential: { builderConfig: "DE_QB_Essential_Package_Retail", testId: null, productionId: null },
-          professional: { builderConfig: "DE_QB_Professional_Package_Retail", testId: null, productionId: null },
-          enterprise: { builderConfig: "DE_QB_Enterprise_Package_Retail", testId: null, productionId: null },
-          instore_lidar: { builderConfig: "DE_QB_Enterprise_Package_Addon-LiDAR", testId: null, productionId: null },
-          instore_3d: { builderConfig: "DE_QB_Enterprise_Package_Addon-Xovis", testId: null, productionId: null }
+          essential: { builderConfig: "DE_QB_Essential_Retail_Package", testId: null, productionId: 672 },
+          professional: { builderConfig: "DE_QB_Professional_Retail_Package", testId: null, productionId: 673 },
+          enterprise: { builderConfig: "DE_QB_Enterprise_Retail_Package", testId: null, productionId: 674 },
+          instore_lidar: { builderConfig: "DE_QB_Enterprise_Retail_Package_Addon-LiDAR", testId: null, productionId: 676 },
+          instore_3d: { builderConfig: "DE_QB_Enterprise_Retail_Package_Addon-Xovis", testId: null, productionId: 675 }
         },
         fullOpex: {
           capexForOpex: {
-            xovis: { builderConfig: "DE_QB_Footfall_Intel-5YR_CAPEX_Retail", testId: null, productionId: null },
-            milesight: { builderConfig: "DE_QB_Footfall_Intel-5YR_CAPEX_Retail", testId: null, productionId: null }
+            xovis: { builderConfig: "DE_QB_Footfall_Intel-5YR_CAPEX_Retail", testId: null, productionId: 686 },
+            milesight: { builderConfig: "DE_QB_Footfall_Intel-5YR_CAPEX_Retail", testId: null, productionId: 686 }
           },
           packages: {
             milesight: {
-              essential: { builderConfig: null, testId: null, productionId: null },
-              professional: { builderConfig: null, testId: null, productionId: null },
-              enterprise: { builderConfig: null, testId: null, productionId: null }
+              essential: { builderConfig: "DE_QB_Essential_INTEL-5YR_Retail", testId: null, productionId: 680 },
+              professional: { builderConfig: "DE_QB_Professional_INTEL-5YR_Retail", testId: null, productionId: 681 },
+              enterprise: { builderConfig: "DE_QB_Enterprise_INTEL-5YR_Retail", testId: null, productionId: 682 }
             },
             xovis: {
-              essential: { builderConfig: "DE_QB_Essential_INTEL-5YR_Xovis_Retail", testId: null, productionId: null },
-              professional: { builderConfig: "DE_QB_Professional_INTEL-5YR_Xovis_Retail", testId: null, productionId: null },
-              enterprise: { builderConfig: "DE_QB_Enterprise_INTEL-5YR_Xovis_Retail", testId: null, productionId: null }
+              essential: { builderConfig: "DE_QB_Essential_INTEL-5YR_Retail", testId: null, productionId: 680 },
+              professional: { builderConfig: "DE_QB_Professional_INTEL-5YR_Retail", testId: null, productionId: 681 },
+              enterprise: { builderConfig: "DE_QB_Enterprise_INTEL-5YR_Retail", testId: null, productionId: 682 }
             }
           }
         }
@@ -554,26 +592,26 @@ window.PFM_PRICING = {
           tpl_rp_reid_capex: { configurationId: "RP_REID_CAPEX", builderConfig: "DE_QB_Addon_Tracking_Exterprise_Re-ID", testId: null, productionId: null }
         },
         opex: {
-          essential: { builderConfig: "DE_QB_Essential_Package_Retail_Property", testId: null, productionId: null },
-          professional: { builderConfig: "DE_QB_Professional_Package_Retail_Property", testId: null, productionId: null },
-          enterprise: { builderConfig: "DE_QB_Enterprise_Package_Retail_Property", testId: null, productionId: null },
+          essential: { builderConfig: "DE_QB_Essential_Retail_Property_Package", testId: null, productionId: 677 },
+          professional: { builderConfig: "DE_QB_Professional_Retail_Property_Package", testId: null, productionId: 678 },
+          enterprise: { builderConfig: "DE_QB_Enterprise_Retail_Property_Package", testId: null, productionId: 679 },
           reid_addon: { builderConfig: null, testId: null, productionId: null }
         },
         fullOpex: {
           capexForOpex: {
-            xovis: { builderConfig: "ML_QB_Footfall_Intel-5YR_CAPEX_Retail_Property", testId: null, productionId: null },
-            milesight: { builderConfig: "ML_QB_Footfall_Intel-5YR_CAPEX_Retail_Property", testId: null, productionId: null }
+            xovis: { builderConfig: "DE_QB_Footfall_Intel-5YR_CAPEX_Retail_Property", testId: null, productionId: 687 },
+            milesight: { builderConfig: "DE_QB_Footfall_Intel-5YR_CAPEX_Retail_Property", testId: null, productionId: 687 }
           },
           packages: {
             milesight: {
-              essential: { builderConfig: "DE_QB_Essential_INTEL-5YR_Retail_Property", testId: null, productionId: null },
-              professional: { builderConfig: "DE_QB_Professional_INTEL-5YR_Retail_Property", testId: null, productionId: null },
-              enterprise: { builderConfig: "DE_QB_Enterprise_INTEL-5YR_Retail_Property", testId: null, productionId: null }
+              essential: { builderConfig: "DE_QB_Essential_INTEL-5YR_Retail_Property", testId: null, productionId: 683 },
+              professional: { builderConfig: "DE_QB_Professional_INTEL-5YR_Retail_Property", testId: null, productionId: 684 },
+              enterprise: { builderConfig: "DE_QB_Enterprise_INTEL-5YR_Retail_Property", testId: null, productionId: 685 }
             },
             xovis: {
-              essential: { builderConfig: "DE_QB_Essential_INTEL-5YR_Retail_Property", testId: null, productionId: null },
-              professional: { builderConfig: "DE_QB_Professional_INTEL-5YR_Retail_Property", testId: null, productionId: null },
-              enterprise: { builderConfig: "DE_QB_Enterprise_INTEL-5YR_Retail_Property", testId: null, productionId: null }
+              essential: { builderConfig: "DE_QB_Essential_INTEL-5YR_Retail_Property", testId: null, productionId: 683 },
+              professional: { builderConfig: "DE_QB_Professional_INTEL-5YR_Retail_Property", testId: null, productionId: 684 },
+              enterprise: { builderConfig: "DE_QB_Enterprise_INTEL-5YR_Retail_Property", testId: null, productionId: 685 }
             }
           }
         }
@@ -616,6 +654,114 @@ window.PFM_PRICING = {
     }
   },
 
+  // Production Odoo applies sensor-volume tiers inside each pricelist.
+  // Source: September 2026 workbook, Odoo pricelists tab. NL/UK IDs are in
+  // both columns; DE subscription IDs use the owner's Test=Prod clarification.
+  odooProductionPriceListsByEntity: {
+    NL: {
+      retailChain: {
+        capex: { label: "QB_NL_Retail_Retail-Chain", id: 6256 },
+        opex: { label: "QB_NL_SUBS_RETAIL", id: 6258 },
+        fullOpex: { xovis: { label: "QB_NL_SUBS_INTEL-5YR_RETAIL_XOVIS", id: 6259 }, milesight: { label: "QB_NL_SUBS_INTEL-5YR_RETAIL_MILESIGHT", id: 6260 } }
+      },
+      retailProperty: {
+        capex: { label: "QB_NL_Retail_Retail-Property", id: 6257 },
+        opex: { label: "QB_NL_SUBS_RETAILPROP", id: 6261 },
+        fullOpex: { xovis: { label: "QB_NL_SUBS_INTEL-5YR_RETAIL_PROPERTY_XOVIS", id: 6262 }, milesight: { label: "QB_NL_SUBS_INTEL-5YR_RETAIL_PROPERTY_MILESIGHT", id: 6263 } }
+      }
+    },
+    UK: {
+      retailChain: {
+        capex: { label: "QB_UK_Retail_Retail-Chain", id: 6329 },
+        opex: { label: "QB_UK_SUBS_RETAIL", id: 6307 },
+        fullOpex: { xovis: { label: "QB_UK_SUBS_INTEL-5YR_RETAIL_XOVIS", id: 6288 }, milesight: { label: "QB_UK_SUBS_INTEL-5YR_RETAIL_MILESIGHT", id: 6290 } }
+      },
+      retailProperty: {
+        capex: { label: "QB_UK_Retail_Retail-Property", id: 6336 },
+        opex: { label: "QB_UK_SUBS_RETAILPROP", id: 6282 },
+        fullOpex: { xovis: { label: "QB_UK_SUBS_INTEL-5YR_RETAIL_PROPERTY_XOVIS", id: 6284 }, milesight: { label: "QB_UK_SUBS_INTEL-5YR_RETAIL_PROPERTY_MILESIGHT", id: 6286 } }
+      }
+    },
+    DE: {
+      retailChain: {
+        capex: { label: "QB_DE_Retail_Retail-Chain", id: 6353 },
+        opex: { label: "QB_DE_SUBS_RETAIL", id: 6265 },
+        fullOpex: { xovis: { label: "QB_DE_SUBS_INTEL-5YR_RETAIL_XOVIS", id: 6272 }, milesight: { label: "QB_DE_SUBS_INTEL-5YR_RETAIL_MILESIGHT", id: 6270 } }
+      },
+      retailProperty: {
+        capex: { label: "QB_DE_Retail_Retail-Property", id: 6355 },
+        opex: { label: "QB_DE_SUBS_RETAILPROP", id: 6267 },
+        fullOpex: { xovis: { label: "QB_DE_SUBS_INTEL-5YR_RETAIL_PROPERTY_XOVIS", id: 6269 }, milesight: { label: "QB_DE_SUBS_INTEL-5YR_RETAIL_PROPERTY_MILESIGHT", id: 6271 } }
+      }
+    }
+  },
+
+  // Enable only after the n8n workflow and Odoo production credentials are
+  // reviewed against the production payload. Mapping alone is not approval.
+  odooProductionSubmissionEnabled: true,
+
+  // Source: September 2026 production Odoo article export supplied by the user.
+  // The supplied IDs are authoritative product IDs for production quantity rules.
+  odooProductionArticlesByEntity: {
+    NL: {
+      lidar_processing_unit: { odoo_article_id: 15284, internal_reference: "PFMNL-PFM/NUC-LIDAR", odoo_product_id: 15284 },
+      xovis_processing_unit: { odoo_article_id: 12081, internal_reference: "PFMNL-SPI-PU1", odoo_product_id: 12081 },
+      retail_property_setup: {
+        web_reporting: { odoo_product_id: 15554 },
+        sensor_setup: { odoo_product_id: 18241 }
+      },
+      isarsoft_servers: {
+        orin_nano_8gb: { odoo_article_id: 15665, internal_reference: "PFMNL-PFM/REID2002RC", odoo_product_id: 18671 },
+        orin_nx_16gb: { odoo_article_id: 15668, internal_reference: "PFMNL-PFM/REID2004RC", odoo_product_id: 18674 },
+        agx_orin_64gb: { odoo_article_id: 15671, internal_reference: "PFMNL-PFM/REID2016RC", odoo_product_id: 18677 },
+        agx_thor_128gb: { odoo_article_id: 15674, internal_reference: "PFMNL-PFM/REID2032RC", odoo_product_id: 18680 },
+        rtx_2000_ada: { odoo_article_id: 15677, internal_reference: "PFMNL-PFM/REID2010RP", odoo_product_id: 18683 },
+        rtx_4000_ada: { odoo_article_id: 15680, internal_reference: "PFMNL-PFM/REID2020RP", odoo_product_id: 18686 },
+        dual_rtx_4000_ada: { odoo_article_id: 15683, internal_reference: "PFMNL-PFM/REID2040RP", odoo_product_id: 18689 },
+        dual_rtx_5000_ada: { odoo_article_id: 15686, internal_reference: "PFMNL-PFM/REID2080RP", odoo_product_id: 18692 },
+        dual_rtx_6000_ada: { odoo_article_id: 15689, internal_reference: "PFMNL-PFM/REID2120RP", odoo_product_id: 18695 }
+      }
+    },
+    UK: {
+      lidar_processing_unit: { odoo_article_id: 11901, internal_reference: "PFMUK-PFM/NUC-LIDAR", odoo_product_id: 11901 },
+      xovis_processing_unit: { odoo_article_id: 15663, internal_reference: "PFMUK-SPI-PU1", odoo_product_id: 15663 },
+      retail_property_setup: {
+        web_reporting: { odoo_product_id: 15555 },
+        sensor_setup: { odoo_product_id: 15553 }
+      },
+      isarsoft_servers: {
+        orin_nano_8gb: { odoo_article_id: 15667, internal_reference: "PFMUK-PFM/REID2002RC", odoo_product_id: 18673 },
+        orin_nx_16gb: { odoo_article_id: 15669, internal_reference: "PFMUK-PFM/REID2004RC", odoo_product_id: 18675 },
+        agx_orin_64gb: { odoo_article_id: 15672, internal_reference: "PFMUK-PFM/REID2016RC", odoo_product_id: 18678 },
+        agx_thor_128gb: { odoo_article_id: 15675, internal_reference: "PFMUK-PFM/REID2032RC", odoo_product_id: 18784 },
+        rtx_2000_ada: { odoo_article_id: 15678, internal_reference: "PFMUK-PFM/REID2010RP", odoo_product_id: 18684 },
+        rtx_4000_ada: { odoo_article_id: 15681, internal_reference: "PFMUK-PFM/REID2020RP", odoo_product_id: 18687 },
+        dual_rtx_4000_ada: { odoo_article_id: 15684, internal_reference: "PFMUK-PFM/REID2040RP", odoo_product_id: 18690 },
+        dual_rtx_5000_ada: { odoo_article_id: 15687, internal_reference: "PFMUK-PFM/REID2080RP", odoo_product_id: 18693 },
+        dual_rtx_6000_ada: { odoo_article_id: 15690, internal_reference: "PFMUK-PFM/REID2120RP", odoo_product_id: 18696 }
+      }
+    },
+    DE: {
+      lidar_processing_unit: { odoo_article_id: 15662, internal_reference: "PFMDE-PFM/NUC-LIDAR", odoo_product_id: 15662 },
+      xovis_processing_unit: { odoo_article_id: 15438, internal_reference: "PFMDE-SPI-PU1", odoo_product_id: 15438 },
+      retail_property_setup: {
+        web_reporting: { odoo_product_id: 18386 },
+        sensor_setup: { odoo_product_id: 18449 }
+      },
+      isarsoft_servers: {
+        orin_nano_8gb: { odoo_article_id: 15666, internal_reference: "PFMDE-PFM/REID2002RC", odoo_product_id: 18672 },
+        orin_nx_16gb: { odoo_article_id: 15670, internal_reference: "PFMDE-PFM/REID2004RC", odoo_product_id: 18676 },
+        agx_orin_64gb: { odoo_article_id: 15673, internal_reference: "PFMDE-PFM/REID2016RC", odoo_product_id: 18679 },
+        agx_thor_128gb: { odoo_article_id: 15676, internal_reference: "PFMDE-PFM/REID2032RC", odoo_product_id: 18682 },
+        rtx_2000_ada: { odoo_article_id: 15679, internal_reference: "PFMDE-PFM/REID2010RP", odoo_product_id: 18685 },
+        rtx_4000_ada: { odoo_article_id: 15682, internal_reference: "PFMDE-PFM/REID2020RP", odoo_product_id: 18688 },
+        dual_rtx_4000_ada: { odoo_article_id: 15685, internal_reference: "PFMDE-PFM/REID2040RP", odoo_product_id: 18691 },
+        dual_rtx_5000_ada: { odoo_article_id: 15688, internal_reference: "PFMDE-PFM/REID2080RP", odoo_product_id: 18694 },
+        dual_rtx_6000_ada: { odoo_article_id: 15691, internal_reference: "PFMDE-PFM/REID2120RP", odoo_product_id: 18697 }
+      }
+    }
+  },
+
   odooSalesTeams: {
     NL: { id: 1, label: "Sales NL" },
     DE: { id: 13, label: "Sales DE" },
@@ -637,17 +783,19 @@ window.PFM_PRICING = {
 
   odooSalespersonRouting: {
     "Christiaan van Rooijen": { userId: 213, entityKey: "NL", salesTeamId: 1 },
-    "Anna Reilander": { userId: 394, entityKey: "DE", salesTeamId: 13 },
-    "Arnoud Aschman": { userId: 343, entityKey: "NL", salesTeamId: 1 },
-    "Bart Schmitz": { userId: 9, entityKey: "NL", salesTeamId: 1 },
-    "David Sturdy": { userId: 4, entityKey: "UK", salesTeamId: 3 },
+    "Raymond Sestig": { userId: 328, entityKey: "NL", salesTeamId: 1 },
     "Krystof Gogela": { userId: 387, entityKey: "NL", salesTeamId: 1 },
-    "Mark Gosnell": { userId: 335, entityKey: "UK", salesTeamId: 3 },
+    "Arnoud Aschman": { userId: 343, entityKey: "NL", salesTeamId: 1 },
+    "Anna Reiländer": { userId: 394, entityKey: "DE", salesTeamId: 13 },
+    "Bart Schmitz": { userId: 9, entityKey: "NL", salesTeamId: 1 },
+    "David Sturdy": { userId: 44, entityKey: "UK", salesTeamId: 3 },
     "Mark King": { userId: 263, entityKey: "UK", salesTeamId: 3 },
+    "Mark Gosnell": { userId: 335, entityKey: "UK", salesTeamId: 3 },
     "Oliver Germer": { userId: 404, entityKey: "DE", salesTeamId: 13 },
-    "Phill Cox": { userId: 122, entityKey: "UK", salesTeamId: 3 },
-    "Prince Competence": { userId: 382, entityKey: "NL", salesTeamId: 1 },
-    "Raymond Sestig": { userId: 328, entityKey: "NL", salesTeamId: 1 }
+    "Prince Competente": { userId: 382, entityKey: "NL", salesTeamId: 1 },
+    "Tim Drayton": { userId: 97, entityKey: "UK", salesTeamId: 3 },
+    "Phil Cox": { userId: 122, entityKey: "UK", salesTeamId: 3 },
+    "Kevin Zwoll": { userId: 424, entityKey: "DE", salesTeamId: 13 }
   },
 
   // ═══════════════════════════════════════════════════════════════════════════
@@ -752,7 +900,26 @@ window.PFM_PRICING = {
     requiresServer: true,
     requiresTechnicalReview: true,
     requiresPrivacyReview: true,
+    // Legacy fallback retained for older payload consumers. Active Isarsoft
+    // CAPEX uses the segment-specific total-camera tiers below.
     ipCameraCapex: 450,
+    ipCameraCapexPricing: {
+      unit: "EUR_per_camera",
+      tierBasis: "total_ip_cameras_in_scope",
+      retailChain: [
+        { tier: "0-9", minCameras: 0, maxCameras: 9, unitPrice: 425 },
+        { tier: "10-29", minCameras: 10, maxCameras: 29, unitPrice: 380 },
+        { tier: "30-99", minCameras: 30, maxCameras: 99, unitPrice: 350 },
+        { tier: "100+", minCameras: 100, maxCameras: null, unitPrice: 330 }
+      ],
+      retailProperty: [
+        { tier: "0-9", minCameras: 0, maxCameras: 9, unitPrice: 625 },
+        { tier: "10-29", minCameras: 10, maxCameras: 29, unitPrice: 555 },
+        { tier: "30-99", minCameras: 30, maxCameras: 99, unitPrice: 520 },
+        { tier: "100+", minCameras: 100, maxCameras: null, unitPrice: 485 }
+      ],
+      status: "confirmed"
+    },
     remoteConfigPerCamera: 135,
     triggerCapabilities: ["reId", "dwell", "heatMapping"],
     note: "Enterprise entrance sensor (€2.100) has Re-ID built in. Separate IP cameras only needed for additional coverage points beyond entrance.",
