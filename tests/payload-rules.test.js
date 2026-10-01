@@ -118,7 +118,7 @@ assert.equal(nlShopsPayload.operating_unit_id, 7);
 assert.deepEqual(JSON.parse(JSON.stringify(nlShopsPayload.odoo_routing)), {
   source: "salesperson",
   salesperson_name: "Christiaan van Rooijen",
-  user_id: 231,
+  user_id: 213,
   entity_key: "NL",
   company_id: 2,
   operating_unit_id: 7,
